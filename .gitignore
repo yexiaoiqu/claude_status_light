@@ -1,0 +1,23 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+
+## IDE
+.vs/
+.vscode/
+*.sln.DotSettings.user
+
+## OS
+Thumbs.db
+Desktop.ini
+
+## Project
+window-settings.json
+.tmp
+.claude/settings.local.json

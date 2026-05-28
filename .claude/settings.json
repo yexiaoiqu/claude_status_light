@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "powershell -ExecutionPolicy Bypass -File hooks/claude-hook.ps1 PreToolUse"}]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "powershell -ExecutionPolicy Bypass -File hooks/claude-hook.ps1 PostToolUse"}]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "powershell -ExecutionPolicy Bypass -File hooks/claude-hook.ps1 Notification"}]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "powershell -ExecutionPolicy Bypass -File hooks/claude-hook.ps1 Stop"}]
+      }
+    ]
+  }
+}
