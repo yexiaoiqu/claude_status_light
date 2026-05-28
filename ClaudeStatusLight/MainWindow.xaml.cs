@@ -181,4 +181,9 @@ public partial class MainWindow : Window
     {
         DragMove();
     }
+
+    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
 }

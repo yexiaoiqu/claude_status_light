@@ -24,6 +24,23 @@
             </Border.Effect>
         </Border>
 
+        <!-- 关闭按钮 -->
+        <Button x:Name="CloseButton"
+                Content="✕"
+                Width="18" Height="18"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,4,6,0"
+                Background="Transparent"
+                Foreground="#80FFFFFF"
+                BorderThickness="0"
+                FontSize="10"
+                Cursor="Hand"
+                Click="CloseButton_Click"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"/>
+
         <!-- 内容 -->
         <StackPanel VerticalAlignment="Center"
                     HorizontalAlignment="Center"
