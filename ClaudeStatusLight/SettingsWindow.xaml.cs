@@ -71,6 +71,12 @@ public partial class SettingsWindow : Window
             ("Trae", Path.Combine(localAppData, "Trae"), "trae"),
             ("Trae", Path.Combine(appData, "ByteDance", "Trae"), "trae"),
 
+            // Claude dotfile
+            ("Claude", Path.Combine(userProfile, ".claude"), "claude"),
+
+            // Trae dotfile
+            ("Trae", Path.Combine(userProfile, ".trae"), "trae"),
+
             // Codex
             ("Codex", Path.Combine(appData, "codex"), "other"),
             ("Codex", Path.Combine(localAppData, "codex"), "other"),
@@ -90,7 +96,17 @@ public partial class SettingsWindow : Window
         var exePath = Environment.ProcessPath ?? "";
         var exeDir = Path.GetDirectoryName(exePath) ?? ".";
         var rootDir = FindProjectRoot(exeDir);
-        scanPaths.Add(("Claude (项目)", rootDir, "claude"));
+
+        if (rootDir != null)
+        {
+            // Auto-create status.json and hooks if missing
+            var setupMessages = SetupProjectIfNeeded(rootDir);
+            if (setupMessages.Count > 0)
+            {
+                ScanResultText.Text = string.Join("\n", setupMessages);
+            }
+            scanPaths.Add(("Claude (项目)", rootDir, "claude"));
+        }
 
         foreach (var (name, basePath, toolType) in scanPaths)
         {
@@ -99,7 +115,17 @@ public partial class SettingsWindow : Window
             // Search for status.json files
             try
             {
-                var statusFiles = Directory.GetFiles(basePath, "status.json", SearchOption.AllDirectories);
+                var statusFiles = new List<string>();
+                // Direct search
+                statusFiles.AddRange(Directory.GetFiles(basePath, "status.json", SearchOption.TopDirectoryOnly));
+                // Recursive search
+                try { statusFiles.AddRange(Directory.GetFiles(basePath, "status.json", SearchOption.AllDirectories)); } catch { }
+                // Also check .claude subdirectory
+                var claudeSubDir = Path.Combine(basePath, ".claude");
+                if (Directory.Exists(claudeSubDir))
+                {
+                    try { statusFiles.AddRange(Directory.GetFiles(claudeSubDir, "status.json", SearchOption.AllDirectories)); } catch { }
+                }
                 foreach (var statusFile in statusFiles)
                 {
                     // Check if already added
@@ -128,23 +154,161 @@ public partial class SettingsWindow : Window
             catch { }
         }
 
-        ScanResultText.Text = foundCount > 0
+        var resultLines = new List<string>();
+        if (!string.IsNullOrEmpty(ScanResultText.Text))
+            resultLines.Add(ScanResultText.Text);
+        resultLines.Add(foundCount > 0
             ? $"找到 {foundCount} 个状态文件"
-            : "未找到新的状态文件";
+            : "未找到新的状态文件");
+        ScanResultText.Text = string.Join("\n", resultLines);
     }
 
-    private static string FindProjectRoot(string startDir)
+    private static string? FindProjectRoot(string startDir)
     {
         var dir = startDir;
         for (int i = 0; i < 6; i++)
         {
             if (File.Exists(Path.Combine(dir, "status.json")))
                 return dir;
+            if (File.Exists(Path.Combine(dir, ".claude", "status.json")))
+                return dir;
+            if (File.Exists(Path.Combine(dir, ".claude", "settings.json")))
+                return dir;
             var parent = Directory.GetParent(dir);
             if (parent == null) break;
             dir = parent.FullName;
         }
-        return startDir;
+        return null;
+    }
+
+    private static List<string> SetupProjectIfNeeded(string projectDir)
+    {
+        var messages = new List<string>();
+        var statusFile = Path.Combine(projectDir, "status.json");
+        if (!File.Exists(statusFile))
+        {
+            try
+            {
+                var defaultStatus = "{\n    \"message\": \"\",\n    " +
+                    "\"timestamp\": " + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ",\n    " +
+                    "\"state\": \"standby\"\n}";
+                File.WriteAllText(statusFile, defaultStatus);
+                messages.Add("已创建 status.json");
+            }
+            catch (Exception ex)
+            {
+                messages.Add($"创建 status.json 失败: {ex.Message}");
+            }
+        }
+
+        var hooksDir = Path.Combine(projectDir, "hooks");
+        var claudeDir = Path.Combine(projectDir, ".claude");
+        var settingsFile = Path.Combine(claudeDir, "settings.json");
+        var hookScript = Path.Combine(hooksDir, "claude-hook.ps1");
+        var updateScript = Path.Combine(hooksDir, "update-status.ps1");
+
+        var hasHooks = File.Exists(hookScript) && File.Exists(updateScript);
+        var hasSettings = false;
+        if (File.Exists(settingsFile))
+        {
+            try
+            {
+                var content = File.ReadAllText(settingsFile);
+                hasSettings = content.Contains("PreToolUse") && content.Contains("claude-hook");
+            }
+            catch { }
+        }
+
+        if (!hasHooks)
+        {
+            try
+            {
+                if (!Directory.Exists(hooksDir))
+                    Directory.CreateDirectory(hooksDir);
+
+                File.WriteAllText(hookScript,
+                    "# Claude Code Hook\n" +
+                    "param([string]$Event)\n\n" +
+                    "$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path\n" +
+                    "$rootDir = Split-Path -Parent $scriptDir\n" +
+                    "$statusScript = Join-Path $scriptDir \"update-status.ps1\"\n" +
+                    "$lightExe = \"$rootDir\\ClaudeStatusLight\\bin\\Release\\net8.0-windows\\ClaudeStatusLight.exe\"\n\n" +
+                    "# Auto-start status light if not running\n" +
+                    "if ($Event -eq \"PreToolUse\") {\n" +
+                    "    $proc = Get-Process ClaudeStatusLight -ErrorAction SilentlyContinue\n" +
+                    "    if (-not $proc -and (Test-Path $lightExe)) {\n" +
+                    "        Start-Process $lightExe -WindowStyle Hidden\n" +
+                    "    }\n" +
+                    "}\n\n" +
+                    "if ($Event -eq \"PreToolUse\" -or $Event -eq \"PostToolUse\") {\n" +
+                    "    & $statusScript \"thinking\"\n" +
+                    "} elseif ($Event -eq \"Notification\") {\n" +
+                    "    & $statusScript \"need_input\"\n" +
+                    "} elseif ($Event -eq \"Stop\") {\n" +
+                    "    & $statusScript \"done\"\n" +
+                    "}\n");
+
+                File.WriteAllText(updateScript,
+                    "# Claude Code Hook - 状态更新脚本\n" +
+                    "# 用法: .\\update-status.ps1 <state> [message]\n" +
+                    "# 状态: thinking, just_done, done, need_input, error, standby\n\n" +
+                    "param(\n" +
+                    "    [Parameter(Mandatory=$true)]\n" +
+                    "    [ValidateSet(\"thinking\", \"just_done\", \"done\", \"need_input\", \"error\", \"standby\")]\n" +
+                    "    [string]$State,\n\n" +
+                    "    [Parameter(Mandatory=$false)]\n" +
+                    "    [string]$Message = \"\"\n" +
+                    ")\n\n" +
+                    "$statusFile = Join-Path (Join-Path $PSScriptRoot \"..\") \"status.json\"\n" +
+                    "$statusFile = [System.IO.Path]::GetFullPath($statusFile)\n\n" +
+                    "$statusData = @{\n" +
+                    "    state     = $State\n" +
+                    "    timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()\n" +
+                    "    message   = $Message\n" +
+                    "} | ConvertTo-Json\n\n" +
+                    "# 使用临时文件避免写入冲突，UTF8 无 BOM\n" +
+                    "$tempFile = \"$statusFile.tmp\"\n" +
+                    "$utf8NoBom = New-Object System.Text.UTF8Encoding $false\n" +
+                    "[System.IO.File]::WriteAllText($tempFile, $statusData, $utf8NoBom)\n" +
+                    "Move-Item -Path $tempFile -Destination $statusFile -Force\n");
+
+                messages.Add("已创建 hooks 脚本");
+            }
+            catch (Exception ex)
+            {
+                messages.Add($"创建 hooks 脚本失败: {ex.Message}");
+            }
+        }
+
+        if (!hasSettings)
+        {
+            try
+            {
+                if (!Directory.Exists(claudeDir))
+                    Directory.CreateDirectory(claudeDir);
+
+                var hookCmd = $"powershell -ExecutionPolicy Bypass -File \"{Path.Combine(hooksDir, "claude-hook.ps1")}\"";
+                var settings = new
+                {
+                    hooks = new
+                    {
+                        PreToolUse = new[] { new { matcher = "", hooks = new[] { new { type = "command", command = hookCmd + " PreToolUse" } } } },
+                        PostToolUse = new[] { new { matcher = "", hooks = new[] { new { type = "command", command = hookCmd + " PostToolUse" } } } },
+                        Notification = new[] { new { matcher = "", hooks = new[] { new { type = "command", command = hookCmd + " Notification" } } } },
+                        Stop = new[] { new { matcher = "", hooks = new[] { new { type = "command", command = hookCmd + " Stop" } } } }
+                    }
+                };
+                var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(settingsFile, json);
+                messages.Add("已创建 .claude/settings.json (hooks 配置)");
+            }
+            catch (Exception ex)
+            {
+                messages.Add($"创建 hooks 配置失败: {ex.Message}");
+            }
+        }
+
+        return messages;
     }
 
     private void DeleteTool_Click(object sender, RoutedEventArgs e)
