@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
@@ -17,8 +18,11 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _blinkTimer;
     private readonly DispatcherTimer _staleCheckTimer;
     private readonly string _settingsPath;
+    private readonly string _configPath;
+    private TrayIconManager? _trayIcon;
     private bool _blinkOn = true;
     private ClaudeState _currentState = ClaudeState.Standby;
+    private ToolType _activeTool = ToolType.Unknown;
     private DateTime _lastUpdateTime = DateTime.MinValue;
 
     private static readonly SolidColorBrush RedBrush = new SolidColorBrush(Color.FromRgb(220, 50, 50));
@@ -35,11 +39,15 @@ public partial class MainWindow : Window
         var rootDir = FindProjectRoot(exeDir);
 
         _settingsPath = Path.Combine(rootDir, "window-settings.json");
-        var statusFile = Path.Combine(rootDir, "status.json");
+        _configPath = Path.Combine(rootDir, "tool-config.json");
 
         LoadWindowPosition();
 
-        _watcher = new StatusWatcher(statusFile);
+        // Load config or use default
+        var config = LoadConfig(_configPath);
+        var toolConfigs = config.Tools.Count > 0 ? config.Tools : GetDefaultToolConfigs(rootDir);
+
+        _watcher = new StatusWatcher(toolConfigs, config.ActiveToolTimeoutSeconds);
         _watcher.StatusChanged += OnStatusChanged;
 
         _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
@@ -51,7 +59,12 @@ public partial class MainWindow : Window
         _staleCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
         _staleCheckTimer.Tick += (s, e) => CheckStaleState();
 
-        LoadCurrentStatus(statusFile);
+        // Initialize tray icon
+        _trayIcon = new TrayIconManager(_configPath, () => Close());
+
+        // Load initial status from the first available tool
+        LoadInitialStatus(toolConfigs);
+
         _pollTimer.Start();
         _staleCheckTimer.Start();
 
@@ -61,7 +74,80 @@ public partial class MainWindow : Window
             _watcher.Dispose();
             _blinkTimer.Stop();
             _staleCheckTimer.Stop();
+            _trayIcon?.Dispose();
         };
+    }
+
+    private AppConfig LoadConfig(string configPath)
+    {
+        try
+        {
+            if (File.Exists(configPath))
+            {
+                var json = File.ReadAllText(configPath);
+                return JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
+            }
+        }
+        catch { }
+        return new AppConfig();
+    }
+
+    private List<ToolConfig> GetDefaultToolConfigs(string rootDir)
+    {
+        return new List<ToolConfig>
+        {
+            new() { Name = "Claude", StatusFile = Path.Combine(rootDir, "status.json"), ToolType = "claude" }
+        };
+    }
+
+    private void LoadInitialStatus(List<ToolConfig> toolConfigs)
+    {
+        foreach (var config in toolConfigs)
+        {
+            try
+            {
+                if (!File.Exists(config.StatusFile)) continue;
+
+                string json;
+                using (var fs = new FileStream(config.StatusFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var reader = new StreamReader(fs))
+                {
+                    json = reader.ReadToEnd();
+                }
+
+                var data = JsonSerializer.Deserialize<StatusData>(json);
+                if (data == null) continue;
+
+                var state = data.GetClaudeState();
+                var lastWrite = File.GetLastWriteTimeUtc(config.StatusFile);
+                var age = DateTime.UtcNow - lastWrite;
+
+                if (IsStaleState(state) && age > TimeSpan.FromSeconds(60))
+                {
+                    UpdateDisplay(ClaudeState.Standby, ToolType.Unknown);
+                    _trayIcon?.UpdateState(ClaudeState.Standby, ToolType.Unknown);
+                }
+                else
+                {
+                    _lastUpdateTime = DateTime.UtcNow;
+                    var toolType = config.ToolType?.ToLower() switch
+                    {
+                        "claude" => ToolType.Claude,
+                        "trae" => ToolType.Trae,
+                        _ => ToolType.Unknown
+                    };
+                    UpdateDisplay(state, toolType);
+                    _trayIcon?.UpdateState(state, toolType);
+                }
+                return; // Use first valid status
+            }
+            catch
+            {
+                continue;
+            }
+        }
+        UpdateDisplay(ClaudeState.Standby, ToolType.Unknown);
+        _trayIcon?.UpdateState(ClaudeState.Standby, ToolType.Unknown);
     }
 
     private static string FindProjectRoot(string startDir)
@@ -69,49 +155,14 @@ public partial class MainWindow : Window
         var dir = startDir;
         for (int i = 0; i < 6; i++)
         {
-            if (File.Exists(Path.Combine(dir, "status.json")))
+            if (File.Exists(Path.Combine(dir, "status.json")) ||
+                File.Exists(Path.Combine(dir, "tool-config.json")))
                 return dir;
             var parent = Directory.GetParent(dir);
             if (parent == null) break;
             dir = parent.FullName;
         }
         return startDir;
-    }
-
-    private void LoadCurrentStatus(string statusFile)
-    {
-        try
-        {
-            if (!File.Exists(statusFile)) { UpdateDisplay(ClaudeState.Standby); return; }
-
-            string json;
-            using (var fs = new FileStream(statusFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (var reader = new StreamReader(fs))
-            {
-                json = reader.ReadToEnd();
-            }
-
-            var data = JsonSerializer.Deserialize<StatusData>(json);
-            if (data == null) { UpdateDisplay(ClaudeState.Standby); return; }
-
-            var state = data.GetClaudeState();
-            var lastWrite = File.GetLastWriteTimeUtc(statusFile);
-            var age = DateTime.UtcNow - lastWrite;
-
-            if (IsStaleState(state) && age > TimeSpan.FromSeconds(60))
-            {
-                UpdateDisplay(ClaudeState.Standby);
-            }
-            else
-            {
-                _lastUpdateTime = DateTime.UtcNow;
-                UpdateDisplay(state);
-            }
-        }
-        catch
-        {
-            UpdateDisplay(ClaudeState.Standby);
-        }
     }
 
     private static bool IsStaleState(ClaudeState state)
@@ -124,7 +175,7 @@ public partial class MainWindow : Window
         var elapsed = DateTime.UtcNow - _lastUpdateTime;
         if (elapsed > TimeSpan.FromSeconds(60))
         {
-            UpdateDisplay(ClaudeState.Standby);
+            UpdateDisplay(ClaudeState.Standby, ToolType.Unknown);
         }
     }
 
@@ -165,12 +216,14 @@ public partial class MainWindow : Window
     private void OnStatusChanged(object? sender, StatusChangedEventArgs e)
     {
         _lastUpdateTime = DateTime.UtcNow;
-        UpdateDisplay(e.State);
+        UpdateDisplay(e.State, e.ActiveTool);
+        _trayIcon?.UpdateState(e.State, e.ActiveTool);
     }
 
-    private void UpdateDisplay(ClaudeState state)
+    private void UpdateDisplay(ClaudeState state, ToolType activeTool)
     {
         _currentState = state;
+        _activeTool = activeTool;
         _blinkOn = true;
 
         var redMode = StateDisplay.GetRedMode(state);
@@ -180,6 +233,17 @@ public partial class MainWindow : Window
         ApplyLight(RedLight, RedGlow, RedBrush, redMode, true);
         ApplyLight(YellowLight, YellowGlow, YellowBrush, yellowMode, true);
         ApplyLight(GreenLight, GreenGlow, GreenBrush, greenMode, true);
+
+        // Update tool name display
+        if (activeTool != ToolType.Unknown)
+        {
+            ToolNameText.Text = StateDisplay.GetToolDisplayName(activeTool);
+            ToolNameText.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            ToolNameText.Visibility = Visibility.Collapsed;
+        }
 
         StatusText.Text = StateDisplay.GetLabel(state);
 

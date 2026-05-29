@@ -1,0 +1,21 @@
+{
+  "tools": [
+    {
+      "name": "Claude",
+      "statusFile": "status.json",
+      "toolType": "claude"
+    },
+    {
+      "name": "Trae",
+      "statusFile": "trae-status.json",
+      "toolType": "trae"
+    },
+    {
+      "name": "Claude (\u9879\u76EE)",
+      "statusFile": "D:\\DEV\\claude_status_light\\status.json",
+      "toolType": "claude"
+    }
+  ],
+  "autoDetect": true,
+  "activeToolTimeout": 60
+}

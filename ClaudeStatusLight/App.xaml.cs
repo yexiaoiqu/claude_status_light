@@ -7,6 +7,7 @@ namespace ClaudeStatusLight;
 public partial class App : Application
 {
     private static Mutex? _mutex;
+    private static bool _ownsMutex;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -20,12 +21,20 @@ public partial class App : Application
             return;
         }
 
+        _ownsMutex = true;
         base.OnStartup(e);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
-        _mutex?.ReleaseMutex();
+        if (_ownsMutex)
+        {
+            try
+            {
+                _mutex?.ReleaseMutex();
+            }
+            catch { }
+        }
         _mutex?.Dispose();
         base.OnExit(e);
     }

@@ -1,6 +1,14 @@
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace ClaudeStatusLight;
+
+public enum ToolType
+{
+    Claude,
+    Trae,
+    Unknown
+}
 
 public enum ClaudeState
 {
@@ -25,6 +33,9 @@ public class StatusData
     [JsonPropertyName("message")]
     public string? Message { get; set; }
 
+    [JsonPropertyName("tool")]
+    public string? Tool { get; set; }
+
     public ClaudeState GetClaudeState()
     {
         return State?.ToLower() switch
@@ -37,6 +48,40 @@ public class StatusData
             _ => ClaudeState.Standby
         };
     }
+
+    public ToolType GetToolType()
+    {
+        return Tool?.ToLower() switch
+        {
+            "claude" => ToolType.Claude,
+            "trae" => ToolType.Trae,
+            _ => ToolType.Unknown
+        };
+    }
+}
+
+public class ToolConfig
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = "";
+
+    [JsonPropertyName("statusFile")]
+    public string StatusFile { get; set; } = "";
+
+    [JsonPropertyName("toolType")]
+    public string ToolType { get; set; } = "";
+}
+
+public class AppConfig
+{
+    [JsonPropertyName("tools")]
+    public List<ToolConfig> Tools { get; set; } = new();
+
+    [JsonPropertyName("autoDetect")]
+    public bool AutoDetect { get; set; } = true;
+
+    [JsonPropertyName("activeToolTimeout")]
+    public int ActiveToolTimeoutSeconds { get; set; } = 60;
 }
 
 public class WindowPosition
@@ -83,5 +128,12 @@ public static class StateDisplay
         ClaudeState.Done => "已完成",
         ClaudeState.JustDone => "刚刚完成",
         _ => "未知"
+    };
+
+    public static string GetToolDisplayName(ToolType tool) => tool switch
+    {
+        ToolType.Claude => "Claude",
+        ToolType.Trae => "Trae",
+        _ => "Unknown"
     };
 }

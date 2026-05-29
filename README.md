@@ -1,6 +1,16 @@
 # Claude Status Light
 
-Windows 桌面红绿灯，实时显示 Claude Code 的工作状态。
+Windows 桌面红绿灯，实时显示 AI 编程工具的工作状态。
+
+支持工具：Claude Code、Trae、Codex、Cursor、Windsurf
+
+## 功能特性
+
+- 浮动红绿灯窗口，实时显示状态
+- 系统托盘图标，右键菜单快速操作
+- 多工具支持，自动检测活跃工具
+- 状态文件自动扫描配置
+- 拖拽移动，位置自动保存
 
 ## 状态对应
 
@@ -13,28 +23,52 @@ Windows 桌面红绿灯，实时显示 Claude Code 的工作状态。
 | `done` | 绿灯常亮 | 完成 |
 | `just_done` | 绿灯闪烁 | 刚完成 |
 
-非活动灯显示为灰色暗灯。
-
 ## 安装
 
-### 方式一：下载单文件可执行程序
+### 方式一：下载可执行程序（推荐）
 
-从 GitHub Releases 下载 `ClaudeStatusLight.exe`，双击运行，无需安装 .NET。
+1. 从 [Releases](https://github.com/yexiaoiqu/claude_status_light/releases) 下载 `ClaudeStatusLight.exe`
+2. 放到任意目录，双击运行
+3. 无需安装 .NET 运行时
 
 ### 方式二：从源码构建
 
 ```bash
 git clone https://github.com/yexiaoiqu/claude_status_light.git
 cd claude_status_light
-dotnet build ClaudeStatusLight/ClaudeStatusLight.csproj -c Release
+.\build.ps1
 ```
 
-### 方式三：NuGet 包
+构建完成后，`publish\ClaudeStatusLight.exe` 即为单文件可执行程序。
 
-```bash
-dotnet nuget add source "https://nuget.pkg.github.com/yexiaoiqu/index.json" --name "GitHub" --username YOUR_USERNAME --password YOUR_GITHUB_TOKEN
-dotnet add package ClaudeStatusLight --source "GitHub"
+## 使用方法
+
+### 启动应用
+
+双击 `ClaudeStatusLight.exe` 启动，会看到：
+- 浮动红绿灯窗口（可拖拽移动）
+- 任务栏右侧系统托盘图标
+
+### 配置工具
+
+1. 右键点击系统托盘图标
+2. 选择"设置"
+3. 点击"扫描"按钮自动检测已安装的 AI 工具
+4. 点击"保存"
+
+### 状态文件格式
+
+工具的状态文件需要是 JSON 格式：
+
+```json
+{
+    "state": "thinking",
+    "timestamp": 1780020554871,
+    "message": ""
+}
 ```
+
+支持的 state 值：`standby` | `error` | `need_input` | `thinking` | `done` | `just_done`
 
 ## 配置 Claude Code Hook
 
@@ -56,106 +90,49 @@ powershell -ExecutionPolicy Bypass -File "项目路径\hooks\claude-hook.ps1" -E
 claude_status_light/
 ├── ClaudeStatusLight/           # WPF 应用源码
 │   ├── App.xaml.cs              # 入口，mutex 单例
-│   ├── MainWindow.xaml          # UI 布局（三个 Border 圆灯）
-│   ├── MainWindow.xaml.cs       # 主逻辑：轮询、状态显示、闪烁
-│   ├── StatusModels.cs          # 状态枚举、灯模式、显示映射
-│   └── StatusWatcher.cs         # 状态文件读取器
+│   ├── MainWindow.xaml          # 浮动红绿灯 UI
+│   ├── MainWindow.xaml.cs       # 主逻辑：轮询、状态显示
+│   ├── StatusModels.cs          # 状态枚举、配置模型
+│   ├── StatusWatcher.cs         # 多工具状态文件监控
+│   ├── SettingsWindow.xaml      # 设置界面
+│   ├── TrayIconManager.cs       # 系统托盘图标管理
+│   └── IconGenerator.cs         # 动态图标生成
 ├── hooks/
 │   ├── claude-hook.ps1          # Claude Code hook 入口
 │   └── update-status.ps1        # 写入 status.json
+├── build.ps1                    # 构建脚本
+├── tool-config.json             # 工具配置文件
 ├── status.json                  # 当前状态（自动生成）
-├── window-settings.json         # 窗口位置（自动生成）
-├── publish/                     # 单文件发布输出
-│   └── ClaudeStatusLight.exe    # 155MB 单文件可执行程序
-├── nupkgs/                      # NuGet 包输出
-│   └── ClaudeStatusLight.1.0.0.nupkg
-├── nuget.config                 # NuGet 源配置
-└── ClaudeStatusLight.sln        # 解决方案文件（如有）
+└── window-settings.json         # 窗口位置（自动生成）
 ```
 
-## 部署指南（给 AI 看）
+## 常见问题
 
-### 前置条件
+### Q: 启动后看不到窗口？
 
-- Windows 10/11
-- .NET 8.0 SDK（构建时需要）或 .NET 8.0 Runtime（运行时需要）
-- Claude Code CLI
+A: 窗口可能在屏幕边缘，检查任务栏是否有 Claude Status Light 图标。
 
-### 完整部署流程
+### Q: 扫描找不到状态文件？
+
+A: 扫描会检查常见工具的默认安装路径。如果工具安装在自定义路径，可以手动在设置中添加状态文件路径。
+
+### Q: 如何开机自启？
+
+A: 创建 `ClaudeStatusLight.exe` 的快捷方式，放到 `shell:startup` 目录。
+
+## 开发
 
 ```bash
-# 1. 克隆仓库
-git clone https://github.com/yexiaoiqu/claude_status_light.git
-cd claude_status_light
+# 构建
+dotnet build ClaudeStatusLight/ClaudeStatusLight.csproj
 
-# 2. 构建
-dotnet build ClaudeStatusLight/ClaudeStatusLight.csproj -c Release
+# 运行
+dotnet run --project ClaudeStatusLight/ClaudeStatusLight.csproj
 
-# 3. 启动应用（会自动读取 status.json）
-dotnet run --project ClaudeStatusLight/ClaudeStatusLight.csproj -c Release
-
-# 或直接运行已构建的 exe
-ClaudeStatusLight/bin/Release/net8.0-windows/ClaudeStatusLight.exe
+# 发布单文件
+.\build.ps1
 ```
 
-### 打包为单文件可执行程序
+## License
 
-```bash
-dotnet publish ClaudeStatusLight/ClaudeStatusLight.csproj \
-  -c Release \
-  -r win-x64 \
-  --self-contained true \
-  -p:PublishSingleFile=true \
-  -p:IncludeNativeLibrariesForSelfExtract=true \
-  -o publish
-```
-
-输出：`publish/ClaudeStatusLight.exe`（约 155MB，包含 .NET 运行时）
-
-### Hook 脚本工作原理
-
-1. Claude Code 触发事件（PreToolUse/PostToolUse/Notification/Stop）
-2. `claude-hook.ps1` 接收事件，调用 `update-status.ps1` 写入 `status.json`
-3. `update-status.ps1` 使用临时文件 + 原子移动避免写入冲突
-4. WPF 应用每 100ms 轮询 `status.json`，检测到变化后更新灯的状态
-
-### status.json 格式
-
-```json
-{
-    "state": "thinking",
-    "timestamp": 1780020554871,
-    "message": ""
-}
-```
-
-- `state`: `standby` | `error` | `need_input` | `thinking` | `done` | `just_done`
-- `timestamp`: Unix 毫秒时间戳
-- `message`: 可选消息
-
-### 路径解析
-
-应用使用 `Environment.ProcessPath` 获取 exe 所在目录，然后向上查找包含 `status.json` 的目录作为项目根目录。这确保了：
-- 从 `bin/Release/` 运行时能找到项目根目录的 status.json
-- 从 `publish/` 运行时也能找到上级目录的 status.json
-
-### 已知限制
-
-- 状态更新有约 5 秒延迟（Claude Code hook 机制限制，无"开始思考"事件）
-- 不支持 macOS/Linux（WPF 仅限 Windows）
-- 单文件 exe 体积较大（155MB，包含完整 .NET 运行时）
-
-### GitHub Packages
-
-NuGet 包发布在 GitHub Packages：
-
-```bash
-# 添加源
-dotnet nuget add source "https://nuget.pkg.github.com/yexiaoiqu/index.json" \
-  --name "GitHub" \
-  --username YOUR_USERNAME \
-  --password YOUR_GITHUB_TOKEN
-
-# 安装
-dotnet add package ClaudeStatusLight --source "GitHub"
-```
+MIT
