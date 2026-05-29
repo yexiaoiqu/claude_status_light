@@ -20,4 +20,5 @@ Desktop.ini
 ## Project
 window-settings.json
 .tmp
+debug.txt
 .claude/settings.local.json
