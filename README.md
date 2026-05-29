@@ -146,16 +146,3 @@ dotnet publish ClaudeStatusLight/ClaudeStatusLight.csproj \
 - 单文件 exe 体积较大（155MB，包含完整 .NET 运行时）
 
 ### GitHub Packages
-
-NuGet 包发布在 GitHub Packages：
-
-```bash
-# 添加源
-dotnet nuget add source "https://nuget.pkg.github.com/yexiaoiqu/index.json" \
-  --name "GitHub" \
-  --username YOUR_USERNAME \
-  --password YOUR_GITHUB_TOKEN
-
-# 安装
-dotnet add package ClaudeStatusLight --source "GitHub"
-```
