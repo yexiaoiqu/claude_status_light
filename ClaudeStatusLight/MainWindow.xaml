@@ -10,7 +10,7 @@
         WindowStyle="None"
         Background="Transparent"
         ShowInTaskbar="False"
-        Left="1400" Top="850"
+        Left="20" Top="350"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Grid>
