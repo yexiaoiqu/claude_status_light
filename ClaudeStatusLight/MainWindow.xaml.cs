@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private static readonly Color YellowColor = Color.FromRgb(240, 200, 40);
     private static readonly Color GreenColor = Color.FromRgb(50, 200, 80);
     private static readonly Color OffGlow = Color.FromRgb(0, 0, 0);
+    private static readonly Color OffFill = Color.FromRgb(40, 40, 40);
 
     public MainWindow()
     {
@@ -180,14 +181,14 @@ public partial class MainWindow : Window
                 glow.Opacity = 0.8;
                 break;
             case LightMode.Blink:
-                fill.Opacity = isOn ? 1.0 : 0.15;
-                fill.Fill = new SolidColorBrush(color);
-                glow.Color = color;
+                fill.Opacity = 1.0;
+                fill.Fill = isOn ? new SolidColorBrush(color) : new SolidColorBrush(OffFill);
+                glow.Color = isOn ? color : OffGlow;
                 glow.Opacity = isOn ? 0.8 : 0.0;
                 break;
             case LightMode.Off:
-                fill.Opacity = 0.15;
-                fill.Fill = new SolidColorBrush(color);
+                fill.Opacity = 1.0;
+                fill.Fill = new SolidColorBrush(OffFill);
                 glow.Color = OffGlow;
                 glow.Opacity = 0.0;
                 break;
