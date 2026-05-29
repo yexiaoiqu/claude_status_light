@@ -14,8 +14,10 @@ if ($Event -eq "PreToolUse") {
     }
 }
 
-if ($Event -eq "PreToolUse" -or $Event -eq "PostToolUse" -or $Event -eq "Notification") {
+if ($Event -eq "PreToolUse" -or $Event -eq "PostToolUse") {
     & $statusScript "thinking"
+} elseif ($Event -eq "Notification") {
+    & $statusScript "need_input"
 } elseif ($Event -eq "Stop") {
     & $statusScript "done"
 }
