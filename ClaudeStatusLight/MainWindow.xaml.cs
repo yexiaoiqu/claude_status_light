@@ -42,7 +42,7 @@ public partial class MainWindow : Window
         _watcher = new StatusWatcher(statusFile);
         _watcher.StatusChanged += OnStatusChanged;
 
-        _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _pollTimer.Tick += (s, e) => _watcher.Poll();
 
         _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
