@@ -18,12 +18,13 @@ public partial class MainWindow : Window
     private readonly string _settingsPath;
     private bool _blinkOn = true;
     private ClaudeState _currentState = ClaudeState.Standby;
+    private DateTime _lastUpdateTime = DateTime.MinValue;
 
     private static readonly Color RedColor = Color.FromRgb(220, 50, 50);
     private static readonly Color YellowColor = Color.FromRgb(240, 200, 40);
     private static readonly Color GreenColor = Color.FromRgb(50, 200, 80);
     private static readonly Color OffGlow = Color.FromRgb(0, 0, 0);
-    private static readonly Color OffFill = Color.FromRgb(40, 40, 40);
+    private static readonly Color OffFill = Color.FromRgb(60, 60, 60);
 
     public MainWindow()
     {
@@ -68,14 +69,28 @@ public partial class MainWindow : Window
                 var data = JsonSerializer.Deserialize<StatusData>(json);
                 if (data != null)
                 {
-                    UpdateDisplay(data.GetClaudeState());
+                    var state = data.GetClaudeState();
+                    // On startup, check if the status is recent (within 60s)
+                    var lastWrite = File.GetLastWriteTimeUtc(statusFile);
+                    var age = DateTime.UtcNow - lastWrite;
+                    if (IsStaleState(state) && age > TimeSpan.FromSeconds(60))
+                    {
+                        UpdateDisplay(ClaudeState.Standby);
+                    }
+                    else
+                    {
+                        _lastUpdateTime = DateTime.UtcNow;
+                        UpdateDisplay(state);
+                    }
+                    return;
                 }
             }
         }
         catch
         {
-            UpdateDisplay(ClaudeState.Standby);
+            // fall through to standby
         }
+        UpdateDisplay(ClaudeState.Standby);
     }
 
     private static bool IsStaleState(ClaudeState state)
@@ -85,22 +100,10 @@ public partial class MainWindow : Window
     {
         if (!IsStaleState(_currentState)) return;
 
-        try
+        var elapsed = DateTime.UtcNow - _lastUpdateTime;
+        if (elapsed > TimeSpan.FromSeconds(60))
         {
-            var statusFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "status.json");
-            statusFile = Path.GetFullPath(statusFile);
-            if (!File.Exists(statusFile)) return;
-
-            var lastWrite = File.GetLastWriteTimeUtc(statusFile);
-            var elapsed = DateTime.UtcNow - lastWrite;
-            if (elapsed > TimeSpan.FromSeconds(60))
-            {
-                UpdateDisplay(ClaudeState.Standby);
-            }
-        }
-        catch
-        {
-            // ignore errors
+            UpdateDisplay(ClaudeState.Standby);
         }
     }
 
@@ -143,7 +146,11 @@ public partial class MainWindow : Window
 
     private void OnStatusChanged(object? sender, StatusChangedEventArgs e)
     {
-        Dispatcher.Invoke(() => UpdateDisplay(e.State));
+        Dispatcher.Invoke(() =>
+        {
+            _lastUpdateTime = DateTime.UtcNow;
+            UpdateDisplay(e.State);
+        });
     }
 
     private void UpdateDisplay(ClaudeState state)
