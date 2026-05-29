@@ -6,7 +6,7 @@ $rootDir = Split-Path -Parent $scriptDir
 $statusScript = Join-Path $scriptDir "update-status.ps1"
 $lightExe = "$rootDir\ClaudeStatusLight\bin\Release\net8.0-windows\ClaudeStatusLight.exe"
 
-# Auto-start status light if not running
+# Auto-start status light if not running (app has mutex to prevent duplicates)
 if ($Event -eq "PreToolUse") {
     $proc = Get-Process ClaudeStatusLight -ErrorAction SilentlyContinue
     if (-not $proc -and (Test-Path $lightExe)) {
@@ -14,9 +14,7 @@ if ($Event -eq "PreToolUse") {
     }
 }
 
-if ($Event -eq "PreToolUse") {
-    & $statusScript "thinking"
-} elseif ($Event -eq "PostToolUse") {
+if ($Event -eq "PreToolUse" -or $Event -eq "PostToolUse") {
     & $statusScript "thinking"
 } elseif ($Event -eq "Notification") {
     & $statusScript "need_input"

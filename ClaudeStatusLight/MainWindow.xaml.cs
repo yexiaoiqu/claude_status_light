@@ -14,6 +14,7 @@ public partial class MainWindow : Window
 {
     private readonly StatusWatcher _watcher;
     private readonly DispatcherTimer _blinkTimer;
+    private readonly DispatcherTimer _staleCheckTimer;
     private readonly string _settingsPath;
     private bool _blinkOn = true;
     private ClaudeState _currentState = ClaudeState.Standby;
@@ -39,6 +40,11 @@ public partial class MainWindow : Window
         _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _blinkTimer.Tick += BlinkTimer_Tick;
 
+        // Timer to detect stale states (process crash/exit without Stop hook)
+        _staleCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
+        _staleCheckTimer.Tick += (s, e) => CheckStaleState();
+        _staleCheckTimer.Start();
+
         // Read current status from file on startup
         LoadCurrentStatus(statusFile);
         _watcher.Start();
@@ -47,6 +53,7 @@ public partial class MainWindow : Window
         {
             _watcher.Dispose();
             _blinkTimer.Stop();
+            _staleCheckTimer.Stop();
         };
     }
 
@@ -67,6 +74,32 @@ public partial class MainWindow : Window
         catch
         {
             UpdateDisplay(ClaudeState.Standby);
+        }
+    }
+
+    private static bool IsStaleState(ClaudeState state)
+        => state == ClaudeState.Done || state == ClaudeState.JustDone || state == ClaudeState.Thinking;
+
+    private void CheckStaleState()
+    {
+        if (!IsStaleState(_currentState)) return;
+
+        try
+        {
+            var statusFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "status.json");
+            statusFile = Path.GetFullPath(statusFile);
+            if (!File.Exists(statusFile)) return;
+
+            var lastWrite = File.GetLastWriteTimeUtc(statusFile);
+            var elapsed = DateTime.UtcNow - lastWrite;
+            if (elapsed > TimeSpan.FromSeconds(60))
+            {
+                UpdateDisplay(ClaudeState.Standby);
+            }
+        }
+        catch
+        {
+            // ignore errors
         }
     }
 
@@ -153,7 +186,7 @@ public partial class MainWindow : Window
                 glow.Opacity = isOn ? 0.8 : 0.0;
                 break;
             case LightMode.Off:
-                fill.Opacity = 0.2;
+                fill.Opacity = 0.15;
                 fill.Fill = new SolidColorBrush(color);
                 glow.Color = OffGlow;
                 glow.Opacity = 0.0;
