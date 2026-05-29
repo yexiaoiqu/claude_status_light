@@ -5,6 +5,15 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>ClaudeStatusLight</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>yexiaoiqu</Authors>
+    <Description>Windows desktop traffic light for Claude Code status monitoring</Description>
+    <PackageTags>claude;status;light;traffic-light;wpf</PackageTags>
+    <RepositoryUrl>https://github.com/yexiaoiqu/claude_status_light</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
 </Project>

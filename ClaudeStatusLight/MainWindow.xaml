@@ -10,7 +10,7 @@
         WindowStyle="None"
         Background="Transparent"
         ShowInTaskbar="False"
-        Left="1400" Top="850"
+        Left="20" Top="350"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Grid>
@@ -47,49 +47,52 @@
                     Margin="10,16,10,12">
 
             <!-- 红灯 -->
-            <Ellipse x:Name="RedLight"
-                     Width="36" Height="36"
-                     HorizontalAlignment="Center"
-                     Fill="#DC3232"
-                     Margin="0,0,0,6">
-                <Ellipse.Effect>
+            <Border x:Name="RedLight"
+                    Width="36" Height="36"
+                    CornerRadius="18"
+                    Background="#DC3232"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,6">
+                <Border.Effect>
                     <DropShadowEffect x:Name="RedGlow"
                                       BlurRadius="10"
                                       ShadowDepth="0"
                                       Opacity="0"
                                       Color="Red"/>
-                </Ellipse.Effect>
-            </Ellipse>
+                </Border.Effect>
+            </Border>
 
             <!-- 黄灯 -->
-            <Ellipse x:Name="YellowLight"
-                     Width="36" Height="36"
-                     HorizontalAlignment="Center"
-                     Fill="#F0C828"
-                     Margin="0,0,0,6">
-                <Ellipse.Effect>
+            <Border x:Name="YellowLight"
+                    Width="36" Height="36"
+                    CornerRadius="18"
+                    Background="#F0C828"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,6">
+                <Border.Effect>
                     <DropShadowEffect x:Name="YellowGlow"
                                       BlurRadius="10"
                                       ShadowDepth="0"
                                       Opacity="0"
                                       Color="Yellow"/>
-                </Ellipse.Effect>
-            </Ellipse>
+                </Border.Effect>
+            </Border>
 
             <!-- 绿灯 -->
-            <Ellipse x:Name="GreenLight"
-                     Width="36" Height="36"
-                     HorizontalAlignment="Center"
-                     Fill="#32C850"
-                     Margin="0,0,0,6">
-                <Ellipse.Effect>
+            <Border x:Name="GreenLight"
+                    Width="36" Height="36"
+                    CornerRadius="18"
+                    Background="#32C850"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,6">
+                <Border.Effect>
                     <DropShadowEffect x:Name="GreenGlow"
                                       BlurRadius="10"
                                       ShadowDepth="0"
                                       Opacity="0"
                                       Color="LimeGreen"/>
-                </Ellipse.Effect>
-            </Ellipse>
+                </Border.Effect>
+            </Border>
 
             <!-- 状态文字 -->
             <TextBlock x:Name="StatusText"

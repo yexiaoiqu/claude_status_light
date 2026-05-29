@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ClaudeStatusLight;
 
@@ -21,76 +19,47 @@ public class StatusChangedEventArgs : EventArgs
 public class StatusWatcher : IDisposable
 {
     private readonly string _statusFilePath;
-    private readonly string _statusDir;
-    private readonly int _pollIntervalMs;
-    private CancellationTokenSource? _cts;
-    private FileSystemWatcher? _fileWatcher;
     private long _lastTimestamp;
+    private ClaudeState _lastState = ClaudeState.Standby;
 
     public event EventHandler<StatusChangedEventArgs>? StatusChanged;
 
-    public StatusWatcher(string statusFilePath, int pollIntervalMs = 500)
+    public StatusWatcher(string statusFilePath)
     {
         _statusFilePath = statusFilePath;
-        _statusDir = Path.GetDirectoryName(statusFilePath) ?? ".";
-        _pollIntervalMs = pollIntervalMs;
     }
 
-    public void Start()
-    {
-        // FileSystemWatcher for instant notification
-        _fileWatcher = new FileSystemWatcher(_statusDir, "status.json")
-        {
-            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime
-        };
-        _fileWatcher.Changed += (s, e) => ReadAndNotify();
-        _fileWatcher.Created += (s, e) => ReadAndNotify();
-        _fileWatcher.EnableRaisingEvents = true;
-
-        // Polling as fallback
-        _cts = new CancellationTokenSource();
-        Task.Run(() => PollLoop(_cts.Token));
-    }
-
-    public void Stop()
-    {
-        _fileWatcher?.Dispose();
-        _cts?.Cancel();
-    }
-
-    private void ReadAndNotify()
+    public void Poll()
     {
         try
         {
             if (!File.Exists(_statusFilePath)) return;
 
-            var json = File.ReadAllText(_statusFilePath);
-            var data = JsonSerializer.Deserialize<StatusData>(json);
+            string json;
+            using (var fs = new FileStream(_statusFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = new StreamReader(fs))
+            {
+                json = reader.ReadToEnd();
+            }
 
-            if (data != null && data.Timestamp > _lastTimestamp)
+            if (string.IsNullOrWhiteSpace(json)) return;
+
+            var data = JsonSerializer.Deserialize<StatusData>(json);
+            if (data == null) return;
+
+            var newState = data.GetClaudeState();
+            if (data.Timestamp > _lastTimestamp || newState != _lastState)
             {
                 _lastTimestamp = data.Timestamp;
-                StatusChanged?.Invoke(this, new StatusChangedEventArgs(data.GetClaudeState(), data.Message));
+                _lastState = newState;
+                StatusChanged?.Invoke(this, new StatusChangedEventArgs(newState, data.Message));
             }
         }
         catch
         {
-            // ignore read errors
+            // ignore read/parse errors, retry next tick
         }
     }
 
-    private async Task PollLoop(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested)
-        {
-            ReadAndNotify();
-            await Task.Delay(_pollIntervalMs, ct);
-        }
-    }
-
-    public void Dispose()
-    {
-        Stop();
-        _cts?.Dispose();
-    }
+    public void Dispose() { }
 }

@@ -20,7 +20,8 @@ $statusData = @{
     message   = $Message
 } | ConvertTo-Json
 
-# 使用临时文件避免写入冲突
+# 使用临时文件避免写入冲突，UTF8 无 BOM
 $tempFile = "$statusFile.tmp"
-$statusData | Out-File -FilePath $tempFile -Encoding UTF8 -NoNewline
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText($tempFile, $statusData, $utf8NoBom)
 Move-Item -Path $tempFile -Destination $statusFile -Force

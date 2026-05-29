@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
 
@@ -13,58 +13,116 @@ namespace ClaudeStatusLight;
 public partial class MainWindow : Window
 {
     private readonly StatusWatcher _watcher;
+    private readonly DispatcherTimer _pollTimer;
     private readonly DispatcherTimer _blinkTimer;
+    private readonly DispatcherTimer _staleCheckTimer;
     private readonly string _settingsPath;
     private bool _blinkOn = true;
     private ClaudeState _currentState = ClaudeState.Standby;
+    private DateTime _lastUpdateTime = DateTime.MinValue;
 
-    private static readonly Color RedColor = Color.FromRgb(220, 50, 50);
-    private static readonly Color YellowColor = Color.FromRgb(240, 200, 40);
-    private static readonly Color GreenColor = Color.FromRgb(50, 200, 80);
-    private static readonly Color OffGlow = Color.FromRgb(0, 0, 0);
+    private static readonly SolidColorBrush RedBrush = new SolidColorBrush(Color.FromRgb(220, 50, 50));
+    private static readonly SolidColorBrush YellowBrush = new SolidColorBrush(Color.FromRgb(240, 200, 40));
+    private static readonly SolidColorBrush GreenBrush = new SolidColorBrush(Color.FromRgb(50, 200, 80));
+    private static readonly SolidColorBrush OffBrush = new SolidColorBrush(Color.FromRgb(50, 50, 50));
 
     public MainWindow()
     {
         InitializeComponent();
 
-        _settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "window-settings.json");
-        _settingsPath = Path.GetFullPath(_settingsPath);
+        var exePath = Environment.ProcessPath ?? "";
+        var exeDir = Path.GetDirectoryName(exePath) ?? ".";
+        var rootDir = FindProjectRoot(exeDir);
+
+        _settingsPath = Path.Combine(rootDir, "window-settings.json");
+        var statusFile = Path.Combine(rootDir, "status.json");
+
         LoadWindowPosition();
 
-        var statusFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "status.json");
-        statusFile = Path.GetFullPath(statusFile);
-        _watcher = new StatusWatcher(statusFile, 500);
+        _watcher = new StatusWatcher(statusFile);
         _watcher.StatusChanged += OnStatusChanged;
+
+        _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        _pollTimer.Tick += (s, e) => _watcher.Poll();
 
         _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _blinkTimer.Tick += BlinkTimer_Tick;
 
-        // Read current status from file on startup
+        _staleCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
+        _staleCheckTimer.Tick += (s, e) => CheckStaleState();
+
         LoadCurrentStatus(statusFile);
-        _watcher.Start();
+        _pollTimer.Start();
+        _staleCheckTimer.Start();
 
         Closed += (s, e) =>
         {
+            _pollTimer.Stop();
             _watcher.Dispose();
             _blinkTimer.Stop();
+            _staleCheckTimer.Stop();
         };
+    }
+
+    private static string FindProjectRoot(string startDir)
+    {
+        var dir = startDir;
+        for (int i = 0; i < 6; i++)
+        {
+            if (File.Exists(Path.Combine(dir, "status.json")))
+                return dir;
+            var parent = Directory.GetParent(dir);
+            if (parent == null) break;
+            dir = parent.FullName;
+        }
+        return startDir;
     }
 
     private void LoadCurrentStatus(string statusFile)
     {
         try
         {
-            if (File.Exists(statusFile))
+            if (!File.Exists(statusFile)) { UpdateDisplay(ClaudeState.Standby); return; }
+
+            string json;
+            using (var fs = new FileStream(statusFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = new StreamReader(fs))
             {
-                var json = File.ReadAllText(statusFile);
-                var data = JsonSerializer.Deserialize<StatusData>(json);
-                if (data != null)
-                {
-                    UpdateDisplay(data.GetClaudeState());
-                }
+                json = reader.ReadToEnd();
+            }
+
+            var data = JsonSerializer.Deserialize<StatusData>(json);
+            if (data == null) { UpdateDisplay(ClaudeState.Standby); return; }
+
+            var state = data.GetClaudeState();
+            var lastWrite = File.GetLastWriteTimeUtc(statusFile);
+            var age = DateTime.UtcNow - lastWrite;
+
+            if (IsStaleState(state) && age > TimeSpan.FromSeconds(60))
+            {
+                UpdateDisplay(ClaudeState.Standby);
+            }
+            else
+            {
+                _lastUpdateTime = DateTime.UtcNow;
+                UpdateDisplay(state);
             }
         }
         catch
+        {
+            UpdateDisplay(ClaudeState.Standby);
+        }
+    }
+
+    private static bool IsStaleState(ClaudeState state)
+        => state == ClaudeState.Done || state == ClaudeState.JustDone || state == ClaudeState.Thinking;
+
+    private void CheckStaleState()
+    {
+        if (!IsStaleState(_currentState)) return;
+
+        var elapsed = DateTime.UtcNow - _lastUpdateTime;
+        if (elapsed > TimeSpan.FromSeconds(60))
         {
             UpdateDisplay(ClaudeState.Standby);
         }
@@ -85,10 +143,7 @@ public partial class MainWindow : Window
                 }
             }
         }
-        catch
-        {
-            // use default position from XAML
-        }
+        catch { }
     }
 
     private void SaveWindowPosition()
@@ -109,7 +164,8 @@ public partial class MainWindow : Window
 
     private void OnStatusChanged(object? sender, StatusChangedEventArgs e)
     {
-        Dispatcher.Invoke(() => UpdateDisplay(e.State));
+        _lastUpdateTime = DateTime.UtcNow;
+        UpdateDisplay(e.State);
     }
 
     private void UpdateDisplay(ClaudeState state)
@@ -121,9 +177,9 @@ public partial class MainWindow : Window
         var yellowMode = StateDisplay.GetYellowMode(state);
         var greenMode = StateDisplay.GetGreenMode(state);
 
-        ApplyLight(RedLight, RedGlow, RedColor, redMode, true);
-        ApplyLight(YellowLight, YellowGlow, YellowColor, yellowMode, true);
-        ApplyLight(GreenLight, GreenGlow, GreenColor, greenMode, true);
+        ApplyLight(RedLight, RedGlow, RedBrush, redMode, true);
+        ApplyLight(YellowLight, YellowGlow, YellowBrush, yellowMode, true);
+        ApplyLight(GreenLight, GreenGlow, GreenBrush, greenMode, true);
 
         StatusText.Text = StateDisplay.GetLabel(state);
 
@@ -133,29 +189,23 @@ public partial class MainWindow : Window
             _blinkTimer.Stop();
     }
 
-    private void ApplyLight(UIElement ellipse, DropShadowEffect glow, Color color, LightMode mode, bool isOn)
+    private void ApplyLight(Border light, DropShadowEffect glow, SolidColorBrush colorBrush, LightMode mode, bool isOn)
     {
-        var fill = ellipse is System.Windows.Shapes.Shape shape ? shape : null;
-        if (fill == null) return;
-
         switch (mode)
         {
             case LightMode.On:
-                fill.Opacity = 1.0;
-                fill.Fill = new SolidColorBrush(color);
-                glow.Color = color;
+                light.Background = colorBrush;
+                glow.Color = colorBrush.Color;
                 glow.Opacity = 0.8;
                 break;
             case LightMode.Blink:
-                fill.Opacity = isOn ? 1.0 : 0.15;
-                fill.Fill = new SolidColorBrush(color);
-                glow.Color = color;
+                light.Background = isOn ? colorBrush : OffBrush;
+                glow.Color = isOn ? colorBrush.Color : Colors.Black;
                 glow.Opacity = isOn ? 0.8 : 0.0;
                 break;
             case LightMode.Off:
-                fill.Opacity = 0.2;
-                fill.Fill = new SolidColorBrush(color);
-                glow.Color = OffGlow;
+                light.Background = OffBrush;
+                glow.Color = Colors.Black;
                 glow.Opacity = 0.0;
                 break;
         }
@@ -165,16 +215,12 @@ public partial class MainWindow : Window
     {
         _blinkOn = !_blinkOn;
 
-        var redMode = StateDisplay.GetRedMode(_currentState);
-        var yellowMode = StateDisplay.GetYellowMode(_currentState);
-        var greenMode = StateDisplay.GetGreenMode(_currentState);
-
-        if (redMode == LightMode.Blink)
-            ApplyLight(RedLight, RedGlow, RedColor, LightMode.Blink, _blinkOn);
-        if (yellowMode == LightMode.Blink)
-            ApplyLight(YellowLight, YellowGlow, YellowColor, LightMode.Blink, _blinkOn);
-        if (greenMode == LightMode.Blink)
-            ApplyLight(GreenLight, GreenGlow, GreenColor, LightMode.Blink, _blinkOn);
+        if (StateDisplay.GetRedMode(_currentState) == LightMode.Blink)
+            ApplyLight(RedLight, RedGlow, RedBrush, LightMode.Blink, _blinkOn);
+        if (StateDisplay.GetYellowMode(_currentState) == LightMode.Blink)
+            ApplyLight(YellowLight, YellowGlow, YellowBrush, LightMode.Blink, _blinkOn);
+        if (StateDisplay.GetGreenMode(_currentState) == LightMode.Blink)
+            ApplyLight(GreenLight, GreenGlow, GreenBrush, LightMode.Blink, _blinkOn);
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
