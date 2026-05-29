@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using System.Windows.Threading;
 
 namespace ClaudeStatusLight;
 
@@ -20,31 +19,17 @@ public class StatusChangedEventArgs : EventArgs
 public class StatusWatcher : IDisposable
 {
     private readonly string _statusFilePath;
-    private readonly DispatcherTimer _timer;
     private long _lastTimestamp;
     private ClaudeState _lastState = ClaudeState.Standby;
 
     public event EventHandler<StatusChangedEventArgs>? StatusChanged;
 
-    public StatusWatcher(string statusFilePath, int pollIntervalMs = 500)
+    public StatusWatcher(string statusFilePath)
     {
         _statusFilePath = statusFilePath;
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(pollIntervalMs) };
-        _timer.Tick += (s, e) => Poll();
     }
 
-    public void Start()
-    {
-        Poll();
-        _timer.Start();
-    }
-
-    public void Stop()
-    {
-        _timer.Stop();
-    }
-
-    private void Poll()
+    public void Poll()
     {
         try
         {
@@ -76,8 +61,5 @@ public class StatusWatcher : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        Stop();
-    }
+    public void Dispose() { }
 }

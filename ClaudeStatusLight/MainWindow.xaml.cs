@@ -13,6 +13,7 @@ namespace ClaudeStatusLight;
 public partial class MainWindow : Window
 {
     private readonly StatusWatcher _watcher;
+    private readonly DispatcherTimer _pollTimer;
     private readonly DispatcherTimer _blinkTimer;
     private readonly DispatcherTimer _staleCheckTimer;
     private readonly string _settingsPath;
@@ -29,33 +30,52 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        var rootDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..");
-        rootDir = Path.GetFullPath(rootDir);
+        var exePath = Environment.ProcessPath ?? "";
+        var exeDir = Path.GetDirectoryName(exePath) ?? ".";
+        var rootDir = FindProjectRoot(exeDir);
 
         _settingsPath = Path.Combine(rootDir, "window-settings.json");
         var statusFile = Path.Combine(rootDir, "status.json");
 
         LoadWindowPosition();
 
-        _watcher = new StatusWatcher(statusFile, 500);
+        _watcher = new StatusWatcher(statusFile);
         _watcher.StatusChanged += OnStatusChanged;
+
+        _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _pollTimer.Tick += (s, e) => _watcher.Poll();
 
         _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _blinkTimer.Tick += BlinkTimer_Tick;
 
         _staleCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
         _staleCheckTimer.Tick += (s, e) => CheckStaleState();
-        _staleCheckTimer.Start();
 
         LoadCurrentStatus(statusFile);
-        _watcher.Start();
+        _pollTimer.Start();
+        _staleCheckTimer.Start();
 
         Closed += (s, e) =>
         {
+            _pollTimer.Stop();
             _watcher.Dispose();
             _blinkTimer.Stop();
             _staleCheckTimer.Stop();
         };
+    }
+
+    private static string FindProjectRoot(string startDir)
+    {
+        var dir = startDir;
+        for (int i = 0; i < 6; i++)
+        {
+            if (File.Exists(Path.Combine(dir, "status.json")))
+                return dir;
+            var parent = Directory.GetParent(dir);
+            if (parent == null) break;
+            dir = parent.FullName;
+        }
+        return startDir;
     }
 
     private void LoadCurrentStatus(string statusFile)
@@ -144,11 +164,8 @@ public partial class MainWindow : Window
 
     private void OnStatusChanged(object? sender, StatusChangedEventArgs e)
     {
-        Dispatcher.Invoke(() =>
-        {
-            _lastUpdateTime = DateTime.UtcNow;
-            UpdateDisplay(e.State);
-        });
+        _lastUpdateTime = DateTime.UtcNow;
+        UpdateDisplay(e.State);
     }
 
     private void UpdateDisplay(ClaudeState state)
