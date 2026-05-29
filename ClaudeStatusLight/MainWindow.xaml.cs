@@ -47,6 +47,15 @@ public partial class MainWindow : Window
         var config = LoadConfig(_configPath);
         var toolConfigs = config.Tools.Count > 0 ? config.Tools : GetDefaultToolConfigs(rootDir);
 
+        // Resolve relative status file paths against project root
+        foreach (var tc in toolConfigs)
+        {
+            if (!Path.IsPathRooted(tc.StatusFile))
+            {
+                tc.StatusFile = Path.Combine(rootDir, tc.StatusFile);
+            }
+        }
+
         _watcher = new StatusWatcher(toolConfigs, config.ActiveToolTimeoutSeconds);
         _watcher.StatusChanged += OnStatusChanged;
 
