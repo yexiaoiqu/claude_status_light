@@ -176,7 +176,7 @@ public partial class MainWindow : Window
     }
 
     private static bool IsStaleState(ClaudeState state)
-        => state == ClaudeState.Done || state == ClaudeState.JustDone || state == ClaudeState.Thinking;
+        => state == ClaudeState.Done || state == ClaudeState.JustDone;
 
     private void CheckStaleState()
     {
