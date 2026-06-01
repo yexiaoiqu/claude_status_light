@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Interop;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
 
@@ -69,7 +70,7 @@ public partial class MainWindow : Window
         _staleCheckTimer.Tick += (s, e) => CheckStaleState();
 
         // Initialize tray icon
-        _trayIcon = new TrayIconManager(_configPath, () => Close());
+        _trayIcon = new TrayIconManager(_configPath, () => Close(), ResetPosition);
 
         // Load initial status from the first available tool
         LoadInitialStatus(toolConfigs);
@@ -217,6 +218,56 @@ public partial class MainWindow : Window
         catch { }
     }
 
+    private void ResetPosition()
+    {
+        try
+        {
+            // Get DPI scale
+            var source = PresentationSource.FromVisual(this);
+            double dpiX = 1.0, dpiY = 1.0;
+            if (source?.CompositionTarget != null)
+            {
+                dpiX = source.CompositionTarget.TransformFromDevice.M11;
+                dpiY = source.CompositionTarget.TransformFromDevice.M22;
+            }
+
+            // Get monitor work area via Win32 (excludes taskbar)
+            var helper = new WindowInteropHelper(this);
+            var monitor = NativeMethods.MonitorFromWindow(helper.Handle, NativeMethods.MONITOR_DEFAULTTONEAREST);
+            var monitorInfo = new NativeMethods.MONITORINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.MONITORINFO>() };
+            NativeMethods.GetMonitorInfo(monitor, ref monitorInfo);
+            var workArea = monitorInfo.rcWork;
+
+            // Convert device pixels to WPF logical units
+            double workLeft = workArea.Left * dpiX;
+            double workTop = workArea.Top * dpiY;
+            double workWidth = (workArea.Right - workArea.Left) * dpiX;
+            double workHeight = (workArea.Bottom - workArea.Top) * dpiY;
+
+            // Ensure layout is up to date
+            UpdateLayout();
+            double winW = ActualWidth;
+            double winH = ActualHeight;
+
+            // Center on work area
+            Left = workLeft + (workWidth - winW) / 2;
+            Top = workTop + (workHeight - winH) / 2;
+
+            Topmost = true;
+            SaveWindowPosition();
+        }
+        catch
+        {
+            // Fallback: use SystemParameters (primary monitor only)
+            var workArea = SystemParameters.WorkArea;
+            UpdateLayout();
+            Left = workArea.Left + (workArea.Width - ActualWidth) / 2;
+            Top = workArea.Top + (workArea.Height - ActualHeight) / 2;
+            Topmost = true;
+            SaveWindowPosition();
+        }
+    }
+
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         SaveWindowPosition();
@@ -305,4 +356,30 @@ public partial class MainWindow : Window
     {
         Close();
     }
+}
+
+internal static class NativeMethods
+{
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    public struct RECT
+    {
+        public int Left, Top, Right, Bottom;
+    }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    public struct MONITORINFO
+    {
+        public int cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public int dwFlags;
+    }
+
+    public const int MONITOR_DEFAULTTONEAREST = 2;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    public static extern nint MonitorFromWindow(nint hwnd, int dwFlags);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+    public static extern bool GetMonitorInfo(nint hMonitor, ref MONITORINFO lpmi);
 }

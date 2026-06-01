@@ -12,11 +12,13 @@ public class TrayIconManager : IDisposable
     private TaskbarIcon? _trayIcon;
     private readonly string _configPath;
     private readonly Action _onClose;
+    private readonly Action _onResetPosition;
 
-    public TrayIconManager(string configPath, Action onClose)
+    public TrayIconManager(string configPath, Action onClose, Action onResetPosition)
     {
         _configPath = configPath;
         _onClose = onClose;
+        _onResetPosition = onResetPosition;
         CreateTrayIcon();
     }
 
@@ -34,10 +36,14 @@ public class TrayIconManager : IDisposable
         var settingsItem = new MenuItem { Header = "设置" };
         settingsItem.Click += (s, e) => OpenSettings();
 
+        var resetPosItem = new MenuItem { Header = "重置位置" };
+        resetPosItem.Click += (s, e) => _onResetPosition();
+
         var closeItem = new MenuItem { Header = "关闭" };
         closeItem.Click += (s, e) => _onClose();
 
         contextMenu.Items.Add(settingsItem);
+        contextMenu.Items.Add(resetPosItem);
         contextMenu.Items.Add(new Separator());
         contextMenu.Items.Add(closeItem);
 
