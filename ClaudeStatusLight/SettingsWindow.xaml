@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="配置 - Claude Status Light"
-        Width="450" Height="520"
+        Width="450" Height="750"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="#1E1E1E"
@@ -14,6 +14,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -205,8 +206,149 @@
             </StackPanel>
         </Border>
 
+        <!-- 颜色配置 -->
+        <Border Grid.Row="4"
+                Background="#2D2D2D"
+                CornerRadius="8"
+                Padding="12"
+                Margin="0,12,0,0">
+            <StackPanel>
+                <TextBlock Text="状态显示配置"
+                           Foreground="White"
+                           FontSize="14"
+                           FontWeight="Bold"
+                           Margin="0,0,0,12"/>
+
+                <!-- Standby -->
+                <StackPanel Orientation="Horizontal" Margin="0,4">
+                    <TextBlock Text="待机:" Width="50" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <Border x:Name="StandbyColorPreview" Width="24" Height="24"
+                            Background="#DC3232" BorderBrush="#555555" BorderThickness="1"
+                            Margin="0,0,6,0" Cursor="Hand"
+                            MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
+                    <ComboBox x:Name="StandbyMode" Width="65" Margin="0,0,6,0"
+                              SelectedIndex="0"
+                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                        <ComboBoxItem Content="常亮" Tag="on"/>
+                        <ComboBoxItem Content="闪烁" Tag="blink"/>
+                        <ComboBoxItem Content="关闭" Tag="off"/>
+                    </ComboBox>
+                    <CheckBox Content="红" x:Name="StandbyRed" VerticalAlignment="Center" Foreground="#AAAAAA" IsChecked="True"/>
+                    <CheckBox Content="黄" x:Name="StandbyYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="绿" x:Name="StandbyGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                </StackPanel>
+
+                <!-- Error -->
+                <StackPanel Orientation="Horizontal" Margin="0,4">
+                    <TextBlock Text="错误:" Width="50" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <Border x:Name="ErrorColorPreview" Width="24" Height="24"
+                            Background="#DC3232" BorderBrush="#555555" BorderThickness="1"
+                            Margin="0,0,6,0" Cursor="Hand"
+                            MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
+                    <ComboBox x:Name="ErrorMode" Width="65" Margin="0,0,6,0"
+                              SelectedIndex="1"
+                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                        <ComboBoxItem Content="常亮" Tag="on"/>
+                        <ComboBoxItem Content="闪烁" Tag="blink"/>
+                        <ComboBoxItem Content="关闭" Tag="off"/>
+                    </ComboBox>
+                    <CheckBox Content="红" x:Name="ErrorRed" VerticalAlignment="Center" Foreground="#AAAAAA" IsChecked="True"/>
+                    <CheckBox Content="黄" x:Name="ErrorYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="绿" x:Name="ErrorGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                </StackPanel>
+
+                <!-- NeedInput -->
+                <StackPanel Orientation="Horizontal" Margin="0,4">
+                    <TextBlock Text="交互:" Width="50" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <Border x:Name="NeedInputColorPreview" Width="24" Height="24"
+                            Background="#F0C828" BorderBrush="#555555" BorderThickness="1"
+                            Margin="0,0,6,0" Cursor="Hand"
+                            MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
+                    <ComboBox x:Name="NeedInputMode" Width="65" Margin="0,0,6,0"
+                              SelectedIndex="0"
+                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                        <ComboBoxItem Content="常亮" Tag="on"/>
+                        <ComboBoxItem Content="闪烁" Tag="blink"/>
+                        <ComboBoxItem Content="关闭" Tag="off"/>
+                    </ComboBox>
+                    <CheckBox Content="红" x:Name="NeedInputRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <CheckBox Content="黄" x:Name="NeedInputYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
+                    <CheckBox Content="绿" x:Name="NeedInputGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                </StackPanel>
+
+                <!-- Thinking -->
+                <StackPanel Orientation="Horizontal" Margin="0,4">
+                    <TextBlock Text="思考:" Width="50" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <Border x:Name="ThinkingColorPreview" Width="24" Height="24"
+                            Background="#F0C828" BorderBrush="#555555" BorderThickness="1"
+                            Margin="0,0,6,0" Cursor="Hand"
+                            MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
+                    <ComboBox x:Name="ThinkingMode" Width="65" Margin="0,0,6,0"
+                              SelectedIndex="1"
+                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                        <ComboBoxItem Content="常亮" Tag="on"/>
+                        <ComboBoxItem Content="闪烁" Tag="blink"/>
+                        <ComboBoxItem Content="关闭" Tag="off"/>
+                    </ComboBox>
+                    <CheckBox Content="红" x:Name="ThinkingRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <CheckBox Content="黄" x:Name="ThinkingYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
+                    <CheckBox Content="绿" x:Name="ThinkingGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                </StackPanel>
+
+                <!-- Done -->
+                <StackPanel Orientation="Horizontal" Margin="0,4">
+                    <TextBlock Text="完成:" Width="50" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <Border x:Name="DoneColorPreview" Width="24" Height="24"
+                            Background="#32C850" BorderBrush="#555555" BorderThickness="1"
+                            Margin="0,0,6,0" Cursor="Hand"
+                            MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
+                    <ComboBox x:Name="DoneMode" Width="65" Margin="0,0,6,0"
+                              SelectedIndex="0"
+                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                        <ComboBoxItem Content="常亮" Tag="on"/>
+                        <ComboBoxItem Content="闪烁" Tag="blink"/>
+                        <ComboBoxItem Content="关闭" Tag="off"/>
+                    </ComboBox>
+                    <CheckBox Content="红" x:Name="DoneRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <CheckBox Content="黄" x:Name="DoneYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="绿" x:Name="DoneGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
+                </StackPanel>
+
+                <!-- JustDone -->
+                <StackPanel Orientation="Horizontal" Margin="0,4">
+                    <TextBlock Text="刚完成:" Width="50" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <Border x:Name="JustDoneColorPreview" Width="24" Height="24"
+                            Background="#32C850" BorderBrush="#555555" BorderThickness="1"
+                            Margin="0,0,6,0" Cursor="Hand"
+                            MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
+                    <ComboBox x:Name="JustDoneMode" Width="65" Margin="0,0,6,0"
+                              SelectedIndex="1"
+                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                        <ComboBoxItem Content="常亮" Tag="on"/>
+                        <ComboBoxItem Content="闪烁" Tag="blink"/>
+                        <ComboBoxItem Content="关闭" Tag="off"/>
+                    </ComboBox>
+                    <CheckBox Content="红" x:Name="JustDoneRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <CheckBox Content="黄" x:Name="JustDoneYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="绿" x:Name="JustDoneGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
+                </StackPanel>
+
+                <!-- 恢复默认按钮 -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                    <Button Content="恢复默认颜色"
+                            Background="#555555"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="12,6"
+                            FontSize="12"
+                            Cursor="Hand"
+                            Click="ResetColors_Click"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
         <!-- 按钮 -->
-        <StackPanel Grid.Row="4"
+        <StackPanel Grid.Row="5"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,16,0,0">

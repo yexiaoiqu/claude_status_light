@@ -386,6 +386,16 @@ public partial class SettingsWindow : Window
         DialogResult = false;
         Close();
     }
+
+    private void ColorPreview_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        // Placeholder - will be implemented in Task 6
+    }
+
+    private void ResetColors_Click(object sender, RoutedEventArgs e)
+    {
+        // Placeholder - will be implemented in Task 6
+    }
 }
 
 public class ToolConfigItem
