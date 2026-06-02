@@ -228,7 +228,7 @@
                             MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
                     <ComboBox x:Name="StandbyMode" Width="65" Margin="0,0,6,0"
                               SelectedIndex="0"
-                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                              Background="#4A4A4A" Foreground="White" BorderBrush="#666666">
                         <ComboBoxItem Content="常亮" Tag="on"/>
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
@@ -247,7 +247,7 @@
                             MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
                     <ComboBox x:Name="ErrorMode" Width="65" Margin="0,0,6,0"
                               SelectedIndex="1"
-                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                              Background="#4A4A4A" Foreground="White" BorderBrush="#666666">
                         <ComboBoxItem Content="常亮" Tag="on"/>
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
@@ -266,7 +266,7 @@
                             MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
                     <ComboBox x:Name="NeedInputMode" Width="65" Margin="0,0,6,0"
                               SelectedIndex="0"
-                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                              Background="#4A4A4A" Foreground="White" BorderBrush="#666666">
                         <ComboBoxItem Content="常亮" Tag="on"/>
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
@@ -285,7 +285,7 @@
                             MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
                     <ComboBox x:Name="ThinkingMode" Width="65" Margin="0,0,6,0"
                               SelectedIndex="1"
-                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                              Background="#4A4A4A" Foreground="White" BorderBrush="#666666">
                         <ComboBoxItem Content="常亮" Tag="on"/>
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
@@ -304,7 +304,7 @@
                             MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
                     <ComboBox x:Name="DoneMode" Width="65" Margin="0,0,6,0"
                               SelectedIndex="0"
-                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                              Background="#4A4A4A" Foreground="White" BorderBrush="#666666">
                         <ComboBoxItem Content="常亮" Tag="on"/>
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
@@ -323,7 +323,7 @@
                             MouseLeftButtonDown="ColorPreview_MouseLeftButtonDown"/>
                     <ComboBox x:Name="JustDoneMode" Width="65" Margin="0,0,6,0"
                               SelectedIndex="1"
-                              Background="#3D3D3D" Foreground="White" BorderBrush="#555555">
+                              Background="#4A4A4A" Foreground="White" BorderBrush="#666666">
                         <ComboBoxItem Content="常亮" Tag="on"/>
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
