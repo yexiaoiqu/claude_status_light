@@ -155,7 +155,7 @@ public static class StateDisplay
 
 public static class DefaultColors
 {
-    public static readonly Dictionary<string, StateDisplayConfig> StateDisplay = new()
+    public static readonly Dictionary<string, StateDisplayConfig> DisplayConfigs = new()
     {
         ["standby"] = new() { Color = "#DC3232", Mode = "on", Lights = ["red"] },
         ["error"] = new() { Color = "#DC3232", Mode = "blink", Lights = ["red"] },
