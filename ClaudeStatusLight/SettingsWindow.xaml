@@ -140,6 +140,7 @@
                                     </ComboBox.ItemContainerStyle>
                                     <ComboBoxItem Content="claude" Tag="claude"/>
                                     <ComboBoxItem Content="trae" Tag="trae"/>
+                                    <ComboBoxItem Content="copilot" Tag="copilot"/>
                                     <ComboBoxItem Content="其他" Tag="other"/>
                                 </ComboBox>
 

@@ -7,6 +7,7 @@ public enum ToolType
 {
     Claude,
     Trae,
+    Copilot,
     Unknown
 }
 
@@ -55,6 +56,7 @@ public class StatusData
         {
             "claude" => ToolType.Claude,
             "trae" => ToolType.Trae,
+            "copilot" => ToolType.Copilot,
             _ => ToolType.Unknown
         };
     }
@@ -149,6 +151,7 @@ public static class StateDisplay
     {
         ToolType.Claude => "Claude",
         ToolType.Trae => "Trae",
+        ToolType.Copilot => "Copilot",
         _ => "Unknown"
     };
 }

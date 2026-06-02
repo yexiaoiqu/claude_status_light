@@ -95,6 +95,11 @@ public partial class SettingsWindow : Window
             // Windsurf
             ("Windsurf", Path.Combine(appData, "Windsurf"), "other"),
             ("Windsurf", Path.Combine(localAppData, "Windsurf"), "other"),
+
+            // GitHub Copilot
+            ("Copilot", Path.Combine(appData, "GitHub Copilot"), "copilot"),
+            ("Copilot", Path.Combine(localAppData, "GitHub Copilot"), "copilot"),
+            ("Copilot", Path.Combine(userProfile, ".github", "copilot"), "copilot"),
         };
 
         // Also scan project directory
