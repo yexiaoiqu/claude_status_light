@@ -233,9 +233,9 @@
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
                     </ComboBox>
-                    <CheckBox Content="红" x:Name="StandbyRed" VerticalAlignment="Center" Foreground="#AAAAAA" IsChecked="True"/>
-                    <CheckBox Content="黄" x:Name="StandbyYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
-                    <CheckBox Content="绿" x:Name="StandbyGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="一" x:Name="StandbyRed" VerticalAlignment="Center" Foreground="#AAAAAA" IsChecked="True"/>
+                    <CheckBox Content="二" x:Name="StandbyYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="三" x:Name="StandbyGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
                 </StackPanel>
 
                 <!-- Error -->
@@ -252,9 +252,9 @@
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
                     </ComboBox>
-                    <CheckBox Content="红" x:Name="ErrorRed" VerticalAlignment="Center" Foreground="#AAAAAA" IsChecked="True"/>
-                    <CheckBox Content="黄" x:Name="ErrorYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
-                    <CheckBox Content="绿" x:Name="ErrorGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="一" x:Name="ErrorRed" VerticalAlignment="Center" Foreground="#AAAAAA" IsChecked="True"/>
+                    <CheckBox Content="二" x:Name="ErrorYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="三" x:Name="ErrorGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
                 </StackPanel>
 
                 <!-- NeedInput -->
@@ -271,9 +271,9 @@
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
                     </ComboBox>
-                    <CheckBox Content="红" x:Name="NeedInputRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
-                    <CheckBox Content="黄" x:Name="NeedInputYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
-                    <CheckBox Content="绿" x:Name="NeedInputGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="一" x:Name="NeedInputRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <CheckBox Content="二" x:Name="NeedInputYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
+                    <CheckBox Content="三" x:Name="NeedInputGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
                 </StackPanel>
 
                 <!-- Thinking -->
@@ -290,9 +290,9 @@
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
                     </ComboBox>
-                    <CheckBox Content="红" x:Name="ThinkingRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
-                    <CheckBox Content="黄" x:Name="ThinkingYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
-                    <CheckBox Content="绿" x:Name="ThinkingGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="一" x:Name="ThinkingRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <CheckBox Content="二" x:Name="ThinkingYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
+                    <CheckBox Content="三" x:Name="ThinkingGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
                 </StackPanel>
 
                 <!-- Done -->
@@ -309,9 +309,9 @@
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
                     </ComboBox>
-                    <CheckBox Content="红" x:Name="DoneRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
-                    <CheckBox Content="黄" x:Name="DoneYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
-                    <CheckBox Content="绿" x:Name="DoneGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
+                    <CheckBox Content="一" x:Name="DoneRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <CheckBox Content="二" x:Name="DoneYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="三" x:Name="DoneGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
                 </StackPanel>
 
                 <!-- JustDone -->
@@ -328,9 +328,9 @@
                         <ComboBoxItem Content="闪烁" Tag="blink"/>
                         <ComboBoxItem Content="关闭" Tag="off"/>
                     </ComboBox>
-                    <CheckBox Content="红" x:Name="JustDoneRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
-                    <CheckBox Content="黄" x:Name="JustDoneYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
-                    <CheckBox Content="绿" x:Name="JustDoneGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
+                    <CheckBox Content="一" x:Name="JustDoneRed" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    <CheckBox Content="二" x:Name="JustDoneYellow" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0"/>
+                    <CheckBox Content="三" x:Name="JustDoneGreen" VerticalAlignment="Center" Foreground="#AAAAAA" Margin="8,0,0,0" IsChecked="True"/>
                 </StackPanel>
 
                 <!-- 恢复默认按钮 -->
