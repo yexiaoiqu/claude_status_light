@@ -68,7 +68,7 @@ public partial class MainWindow : Window
         _staleCheckTimer.Tick += (s, e) => CheckStaleState();
 
         // Initialize tray icon
-        _trayIcon = new TrayIconManager(_configPath, () => Close(), ResetPosition);
+        _trayIcon = new TrayIconManager(_configPath, () => Close(), ResetPosition, ReloadConfig);
 
         // Load initial status from the first available tool
         LoadInitialStatus(toolConfigs);
@@ -403,6 +403,12 @@ public partial class MainWindow : Window
                     break;
             }
         }
+    }
+
+    public void ReloadConfig()
+    {
+        _config = LoadConfig(_configPath);
+        UpdateDisplay(_currentState, _activeTool);
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

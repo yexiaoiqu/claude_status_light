@@ -13,12 +13,14 @@ public class TrayIconManager : IDisposable
     private readonly string _configPath;
     private readonly Action _onClose;
     private readonly Action _onResetPosition;
+    private readonly Action? _onSettingsChanged;
 
-    public TrayIconManager(string configPath, Action onClose, Action onResetPosition)
+    public TrayIconManager(string configPath, Action onClose, Action onResetPosition, Action? onSettingsChanged = null)
     {
         _configPath = configPath;
         _onClose = onClose;
         _onResetPosition = onResetPosition;
+        _onSettingsChanged = onSettingsChanged;
         CreateTrayIcon();
     }
 
@@ -86,7 +88,10 @@ public class TrayIconManager : IDisposable
         try
         {
             var settingsWindow = new SettingsWindow(_configPath);
-            settingsWindow.ShowDialog();
+            if (settingsWindow.ShowDialog() == true)
+            {
+                _onSettingsChanged?.Invoke();
+            }
         }
         catch (Exception ex)
         {
