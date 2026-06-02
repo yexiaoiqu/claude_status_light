@@ -2,7 +2,7 @@
 
 Windows 桌面红绿灯，实时显示 AI 编程工具的工作状态。
 
-支持工具：Claude Code、Trae、Codex、Cursor、Windsurf
+支持工具：Claude Code、Trae、GitHub Copilot、Codex、Cursor、Windsurf
 
 ## 功能特性
 
@@ -12,8 +12,13 @@ Windows 桌面红绿灯，实时显示 AI 编程工具的工作状态。
 - 状态文件自动扫描配置
 - 扫描时自动创建缺失的 status.json 和 hooks
 - 拖拽移动，位置自动保存
+- **可自定义颜色配置** - 为每个状态设置不同颜色
+- **可配置灯模式** - 常亮、闪烁、关闭
+- **可选择灯组合** - 灵活配置每个状态使用哪些灯
+- **实时预览** - 应用按钮即时生效
+- **颜色选择器** - 可视化选择颜色
 
-## 状态对应
+## 状态对应（默认配置）
 
 | 状态 | 灯光 | 含义 |
 |------|------|------|
@@ -23,6 +28,8 @@ Windows 桌面红绿灯，实时显示 AI 编程工具的工作状态。
 | `thinking` | 黄灯闪烁 | 思考中 |
 | `done` | 绿灯常亮 | 完成 |
 | `just_done` | 绿灯闪烁 | 刚完成 |
+
+> 所有颜色和灯光模式都可以在设置中自定义。
 
 ## 安装
 
@@ -64,6 +71,7 @@ cd claude_status_light
 - `%APPDATA%\Claude`、`%LOCALAPPDATA%\Claude`
 - `%USERPROFILE%\.claude`
 - `%APPDATA%\Trae`、`%LOCALAPPDATA%\Trae`、`%USERPROFILE%\.trae`
+- `%APPDATA%\GitHub Copilot`、`%LOCALAPPDATA%\GitHub Copilot`
 - `%APPDATA%\codex`、`%USERPROFILE%\.codex`
 - `%APPDATA%\Cursor`、`%APPDATA%\Windsurf`
 - 项目目录及其父目录
@@ -137,6 +145,17 @@ Stop:          powershell -ExecutionPolicy Bypass -File "你的项目路径\hook
 如果你同时使用多个 AI 工具（如 Claude + Trae），应用会根据状态文件的更新时间自动检测当前活跃的工具，并在红绿灯上方显示工具名称。
 
 在设置中可以调整"自动检测活跃工具"和超时时间。
+
+### 自定义颜色配置
+
+1. 右键托盘图标 → 设置
+2. 在"状态显示配置"区域，点击颜色预览打开调色盘
+3. 选择灯光模式（常亮/闪烁/关闭）
+4. 勾选要使用的灯（一/二/三）
+5. 点击"应用"实时预览效果
+6. 点击"保存"保存配置
+
+配置保存在 `tool-config.json` 的 `stateDisplay` 字段。
 
 ### 开机自启动
 
