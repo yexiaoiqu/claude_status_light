@@ -88,6 +88,7 @@ public class TrayIconManager : IDisposable
         try
         {
             var settingsWindow = new SettingsWindow(_configPath);
+            settingsWindow.SettingsApplied += () => _onSettingsChanged?.Invoke();
             if (settingsWindow.ShowDialog() == true)
             {
                 _onSettingsChanged?.Invoke();

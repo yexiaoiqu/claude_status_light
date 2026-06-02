@@ -362,6 +362,16 @@
                     Cursor="Hand"
                     Click="Cancel_Click"/>
 
+            <Button Content="应用"
+                    Background="#2D8C3C"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Padding="20,8"
+                    Margin="0,0,8,0"
+                    FontSize="13"
+                    Cursor="Hand"
+                    Click="Apply_Click"/>
+
             <Button Content="保存"
                     Background="#0078D4"
                     Foreground="White"

@@ -15,6 +15,8 @@ public partial class SettingsWindow : Window
     private readonly ObservableCollection<ToolConfigItem> _tools = new();
     private AppConfig _config;
 
+    public event Action? SettingsApplied;
+
     public SettingsWindow(string configPath)
     {
         InitializeComponent();
@@ -322,7 +324,7 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private void Save_Click(object sender, RoutedEventArgs e)
+    private bool SaveConfig()
     {
         // Validate
         foreach (var tool in _tools)
@@ -330,19 +332,19 @@ public partial class SettingsWindow : Window
             if (string.IsNullOrWhiteSpace(tool.Name))
             {
                 MessageBox.Show("工具名称不能为空", "验证错误", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                return false;
             }
             if (string.IsNullOrWhiteSpace(tool.StatusFile))
             {
                 MessageBox.Show($"工具 '{tool.Name}' 的状态文件路径不能为空", "验证错误", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                return false;
             }
         }
 
         if (!int.TryParse(TimeoutTextBox.Text, out var timeout) || timeout < 10)
         {
             MessageBox.Show("超时时间必须是大于等于 10 的数字", "验证错误", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            return false;
         }
 
         // Build config
@@ -385,12 +387,29 @@ public partial class SettingsWindow : Window
             var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(_configPath, json);
 
-            DialogResult = true;
-            Close();
+            return true;
         }
         catch (System.Exception ex)
         {
             MessageBox.Show($"保存失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
+        }
+    }
+
+    private void Apply_Click(object sender, RoutedEventArgs e)
+    {
+        if (SaveConfig())
+        {
+            SettingsApplied?.Invoke();
+        }
+    }
+
+    private void Save_Click(object sender, RoutedEventArgs e)
+    {
+        if (SaveConfig())
+        {
+            DialogResult = true;
+            Close();
         }
     }
 
