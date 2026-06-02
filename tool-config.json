@@ -4,18 +4,52 @@
       "name": "Claude",
       "statusFile": "status.json",
       "toolType": "claude"
-    },
-    {
-      "name": "Trae",
-      "statusFile": "trae-status.json",
-      "toolType": "trae"
-    },
-    {
-      "name": "Claude (\u9879\u76EE)",
-      "statusFile": "D:\\DEV\\claude_status_light\\status.json",
-      "toolType": "claude"
     }
   ],
   "autoDetect": true,
-  "activeToolTimeout": 60
+  "activeToolTimeout": 60,
+  "stateDisplay": {
+    "standby": {
+      "color": "#DC3232",
+      "mode": "on",
+      "lights": [
+        "red"
+      ]
+    },
+    "error": {
+      "color": "#DC3232",
+      "mode": "blink",
+      "lights": [
+        "red"
+      ]
+    },
+    "need_input": {
+      "color": "#F0C828",
+      "mode": "on",
+      "lights": [
+        "yellow"
+      ]
+    },
+    "thinking": {
+      "color": "#F0C828",
+      "mode": "blink",
+      "lights": [
+        "yellow"
+      ]
+    },
+    "done": {
+      "color": "#32C850",
+      "mode": "on",
+      "lights": [
+        "green"
+      ]
+    },
+    "just_done": {
+      "color": "#32C850",
+      "mode": "blink",
+      "lights": [
+        "green"
+      ]
+    }
+  }
 }
