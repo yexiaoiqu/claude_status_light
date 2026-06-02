@@ -222,6 +222,64 @@ public static class ColorExtensions
 - 如果 `stateDisplay` 配置缺失或为空，使用当前的默认映射（硬编码值）
 - 保持现有行为不变
 
+## 重置/恢复默认功能
+
+### 默认配置定义
+
+```csharp
+private static readonly Dictionary<string, StateDisplayConfig> DefaultStateDisplay = new()
+{
+    ["standby"] = new() { Color = "#DC3232", Mode = "on", Lights = ["red"] },
+    ["error"] = new() { Color = "#DC3232", Mode = "blink", Lights = ["red"] },
+    ["need_input"] = new() { Color = "#F0C828", Mode = "on", Lights = ["yellow"] },
+    ["thinking"] = new() { Color = "#F0C828", Mode = "blink", Lights = ["yellow"] },
+    ["done"] = new() { Color = "#32C850", Mode = "on", Lights = ["green"] },
+    ["just_done"] = new() { Color = "#32C850", Mode = "blink", Lights = ["green"] }
+};
+```
+
+### Settings UI 添加重置按钮
+
+在颜色配置区域底部添加按钮：
+
+```xml
+<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+    <Button Content="恢复默认颜色" Click="ResetColors_Click" Width="100" Margin="0,0,10,0"/>
+    <Button Content="保存" Click="Save_Click" Width="80"/>
+</StackPanel>
+```
+
+### 重置功能实现
+
+```csharp
+private void ResetColors_Click(object sender, RoutedEventArgs e)
+{
+    var result = MessageBox.Show(
+        "确定要恢复默认颜色配置吗？",
+        "确认",
+        MessageBoxButton.YesNo,
+        MessageBoxImage.Question);
+    
+    if (result == MessageBoxResult.Yes)
+    {
+        LoadDefaultColors();
+        MessageBox.Show("已恢复默认颜色配置", "提示");
+    }
+}
+
+private void LoadDefaultColors()
+{
+    // 将所有颜色预览、模式、灯选择控件重置为默认值
+    StandbyColorPreview.Background = new SolidColorBrush(ColorConverter.ConvertFromString("#DC3232"));
+    StandbyMode.SelectedIndex = 0; // 常亮
+    StandbyRed.IsChecked = true;
+    StandbyYellow.IsChecked = false;
+    StandbyGreen.IsChecked = false;
+    
+    // 其他状态类似...
+}
+```
+
 ## 测试方案
 
 1. 测试默认配置是否正常工作
@@ -229,3 +287,5 @@ public static class ColorExtensions
 3. 测试灯模式（常亮/闪烁/关闭）是否正常
 4. 测试多灯组合是否正常
 5. 测试配置文件缺失或格式错误时的降级处理
+6. 测试重置/恢复默认功能是否正常工作
+7. 测试重置后配置文件是否正确更新
