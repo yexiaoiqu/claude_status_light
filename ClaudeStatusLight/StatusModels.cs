@@ -72,6 +72,18 @@ public class ToolConfig
     public string ToolType { get; set; } = "";
 }
 
+public class StateDisplayConfig
+{
+    [JsonPropertyName("color")]
+    public string Color { get; set; } = "#FFFFFF";
+
+    [JsonPropertyName("mode")]
+    public string Mode { get; set; } = "off";
+
+    [JsonPropertyName("lights")]
+    public List<string> Lights { get; set; } = new();
+}
+
 public class AppConfig
 {
     [JsonPropertyName("tools")]
@@ -82,6 +94,9 @@ public class AppConfig
 
     [JsonPropertyName("activeToolTimeout")]
     public int ActiveToolTimeoutSeconds { get; set; } = 60;
+
+    [JsonPropertyName("stateDisplay")]
+    public Dictionary<string, StateDisplayConfig> StateDisplay { get; set; } = new();
 }
 
 public class WindowPosition
@@ -135,5 +150,18 @@ public static class StateDisplay
         ToolType.Claude => "Claude",
         ToolType.Trae => "Trae",
         _ => "Unknown"
+    };
+}
+
+public static class DefaultColors
+{
+    public static readonly Dictionary<string, StateDisplayConfig> StateDisplay = new()
+    {
+        ["standby"] = new() { Color = "#DC3232", Mode = "on", Lights = ["red"] },
+        ["error"] = new() { Color = "#DC3232", Mode = "blink", Lights = ["red"] },
+        ["need_input"] = new() { Color = "#F0C828", Mode = "on", Lights = ["yellow"] },
+        ["thinking"] = new() { Color = "#F0C828", Mode = "blink", Lights = ["yellow"] },
+        ["done"] = new() { Color = "#32C850", Mode = "on", Lights = ["green"] },
+        ["just_done"] = new() { Color = "#32C850", Mode = "blink", Lights = ["green"] }
     };
 }
