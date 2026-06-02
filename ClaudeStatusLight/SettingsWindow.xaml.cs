@@ -5,6 +5,7 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace ClaudeStatusLight;
 
@@ -36,6 +37,8 @@ public partial class SettingsWindow : Window
         }
 
         ToolsList.ItemsSource = _tools;
+
+        LoadStateDisplayConfig();
     }
 
     private AppConfig LoadConfig()
@@ -360,6 +363,16 @@ public partial class SettingsWindow : Window
             });
         }
 
+        config.StateDisplay = new Dictionary<string, StateDisplayConfig>
+        {
+            ["standby"] = GetStateDisplayConfigFromUI(StandbyColorPreview, StandbyMode, StandbyRed, StandbyYellow, StandbyGreen),
+            ["error"] = GetStateDisplayConfigFromUI(ErrorColorPreview, ErrorMode, ErrorRed, ErrorYellow, ErrorGreen),
+            ["need_input"] = GetStateDisplayConfigFromUI(NeedInputColorPreview, NeedInputMode, NeedInputRed, NeedInputYellow, NeedInputGreen),
+            ["thinking"] = GetStateDisplayConfigFromUI(ThinkingColorPreview, ThinkingMode, ThinkingRed, ThinkingYellow, ThinkingGreen),
+            ["done"] = GetStateDisplayConfigFromUI(DoneColorPreview, DoneMode, DoneRed, DoneYellow, DoneGreen),
+            ["just_done"] = GetStateDisplayConfigFromUI(JustDoneColorPreview, JustDoneMode, JustDoneRed, JustDoneYellow, JustDoneGreen)
+        };
+
         // Save
         try
         {
@@ -389,12 +402,113 @@ public partial class SettingsWindow : Window
 
     private void ColorPreview_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        // Placeholder - will be implemented in Task 6
+        if (sender is not Border border) return;
+
+        var dialog = new System.Windows.Forms.ColorDialog();
+        var currentColor = ((SolidColorBrush)border.Background).Color;
+        dialog.Color = currentColor.ToWinFormsColor();
+
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            var wpfColor = dialog.Color.ToWpfColor();
+            border.Background = new SolidColorBrush(wpfColor);
+        }
+    }
+
+    private void LoadStateDisplayConfig()
+    {
+        var stateDisplay = _config.StateDisplay.Count > 0
+            ? _config.StateDisplay
+            : DefaultColors.DisplayConfigs;
+
+        if (stateDisplay.TryGetValue("standby", out var standby))
+        {
+            StandbyColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(standby.Color));
+            StandbyMode.SelectedIndex = standby.Mode == "on" ? 0 : standby.Mode == "blink" ? 1 : 2;
+            StandbyRed.IsChecked = standby.Lights.Contains("red");
+            StandbyYellow.IsChecked = standby.Lights.Contains("yellow");
+            StandbyGreen.IsChecked = standby.Lights.Contains("green");
+        }
+
+        if (stateDisplay.TryGetValue("error", out var error))
+        {
+            ErrorColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(error.Color));
+            ErrorMode.SelectedIndex = error.Mode == "on" ? 0 : error.Mode == "blink" ? 1 : 2;
+            ErrorRed.IsChecked = error.Lights.Contains("red");
+            ErrorYellow.IsChecked = error.Lights.Contains("yellow");
+            ErrorGreen.IsChecked = error.Lights.Contains("green");
+        }
+
+        if (stateDisplay.TryGetValue("need_input", out var needInput))
+        {
+            NeedInputColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(needInput.Color));
+            NeedInputMode.SelectedIndex = needInput.Mode == "on" ? 0 : needInput.Mode == "blink" ? 1 : 2;
+            NeedInputRed.IsChecked = needInput.Lights.Contains("red");
+            NeedInputYellow.IsChecked = needInput.Lights.Contains("yellow");
+            NeedInputGreen.IsChecked = needInput.Lights.Contains("green");
+        }
+
+        if (stateDisplay.TryGetValue("thinking", out var thinking))
+        {
+            ThinkingColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(thinking.Color));
+            ThinkingMode.SelectedIndex = thinking.Mode == "on" ? 0 : thinking.Mode == "blink" ? 1 : 2;
+            ThinkingRed.IsChecked = thinking.Lights.Contains("red");
+            ThinkingYellow.IsChecked = thinking.Lights.Contains("yellow");
+            ThinkingGreen.IsChecked = thinking.Lights.Contains("green");
+        }
+
+        if (stateDisplay.TryGetValue("done", out var done))
+        {
+            DoneColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(done.Color));
+            DoneMode.SelectedIndex = done.Mode == "on" ? 0 : done.Mode == "blink" ? 1 : 2;
+            DoneRed.IsChecked = done.Lights.Contains("red");
+            DoneYellow.IsChecked = done.Lights.Contains("yellow");
+            DoneGreen.IsChecked = done.Lights.Contains("green");
+        }
+
+        if (stateDisplay.TryGetValue("just_done", out var justDone))
+        {
+            JustDoneColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(justDone.Color));
+            JustDoneMode.SelectedIndex = justDone.Mode == "on" ? 0 : justDone.Mode == "blink" ? 1 : 2;
+            JustDoneRed.IsChecked = justDone.Lights.Contains("red");
+            JustDoneYellow.IsChecked = justDone.Lights.Contains("yellow");
+            JustDoneGreen.IsChecked = justDone.Lights.Contains("green");
+        }
     }
 
     private void ResetColors_Click(object sender, RoutedEventArgs e)
     {
-        // Placeholder - will be implemented in Task 6
+        var result = MessageBox.Show(
+            "确定要恢复默认颜色配置吗？",
+            "确认",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            _config.StateDisplay = new Dictionary<string, StateDisplayConfig>(DefaultColors.DisplayConfigs);
+            LoadStateDisplayConfig();
+            MessageBox.Show("已恢复默认颜色配置", "提示");
+        }
+    }
+
+    private StateDisplayConfig GetStateDisplayConfigFromUI(
+        Border colorPreview, ComboBox modeCombo,
+        CheckBox redCheck, CheckBox yellowCheck, CheckBox greenCheck)
+    {
+        var color = ((SolidColorBrush)colorPreview.Background).Color;
+        var mode = ((ComboBoxItem)modeCombo.SelectedItem).Tag.ToString() ?? "off";
+        var lights = new List<string>();
+        if (redCheck.IsChecked == true) lights.Add("red");
+        if (yellowCheck.IsChecked == true) lights.Add("yellow");
+        if (greenCheck.IsChecked == true) lights.Add("green");
+
+        return new StateDisplayConfig
+        {
+            Color = $"#{color.R:X2}{color.G:X2}{color.B:X2}",
+            Mode = mode,
+            Lights = lights
+        };
     }
 }
 
