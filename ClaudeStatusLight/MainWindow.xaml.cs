@@ -25,10 +25,8 @@ public partial class MainWindow : Window
     private ClaudeState _currentState = ClaudeState.Standby;
     private ToolType _activeTool = ToolType.Unknown;
     private DateTime _lastUpdateTime = DateTime.MinValue;
+    private AppConfig _config = new();
 
-    private static readonly SolidColorBrush RedBrush = new SolidColorBrush(Color.FromRgb(220, 50, 50));
-    private static readonly SolidColorBrush YellowBrush = new SolidColorBrush(Color.FromRgb(240, 200, 40));
-    private static readonly SolidColorBrush GreenBrush = new SolidColorBrush(Color.FromRgb(50, 200, 80));
     private static readonly SolidColorBrush OffBrush = new SolidColorBrush(Color.FromRgb(50, 50, 50));
 
     public MainWindow()
@@ -45,8 +43,8 @@ public partial class MainWindow : Window
         LoadWindowPosition();
 
         // Load config or use default
-        var config = LoadConfig(_configPath);
-        var toolConfigs = config.Tools.Count > 0 ? config.Tools : GetDefaultToolConfigs(rootDir);
+        _config = LoadConfig(_configPath);
+        var toolConfigs = _config.Tools.Count > 0 ? _config.Tools : GetDefaultToolConfigs(rootDir);
 
         // Resolve relative status file paths against project root
         foreach (var tc in toolConfigs)
@@ -57,7 +55,7 @@ public partial class MainWindow : Window
             }
         }
 
-        _watcher = new StatusWatcher(toolConfigs, config.ActiveToolTimeoutSeconds);
+        _watcher = new StatusWatcher(toolConfigs, _config.ActiveToolTimeoutSeconds);
         _watcher.StatusChanged += OnStatusChanged;
 
         _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
@@ -280,19 +278,64 @@ public partial class MainWindow : Window
         _trayIcon?.UpdateState(e.State, e.ActiveTool);
     }
 
+    private StateDisplayConfig GetDisplayConfig(ClaudeState state)
+    {
+        var stateKey = state switch
+        {
+            ClaudeState.Standby => "standby",
+            ClaudeState.Error => "error",
+            ClaudeState.NeedInput => "need_input",
+            ClaudeState.Thinking => "thinking",
+            ClaudeState.Done => "done",
+            ClaudeState.JustDone => "just_done",
+            _ => "standby"
+        };
+
+        if (_config.StateDisplay.TryGetValue(stateKey, out var config))
+            return config;
+
+        return DefaultColors.DisplayConfigs.TryGetValue(stateKey, out var defaultConfig)
+            ? defaultConfig
+            : new StateDisplayConfig { Color = "#FFFFFF", Mode = "off", Lights = new List<string>() };
+    }
+
     private void UpdateDisplay(ClaudeState state, ToolType activeTool)
     {
         _currentState = state;
         _activeTool = activeTool;
         _blinkOn = true;
 
-        var redMode = StateDisplay.GetRedMode(state);
-        var yellowMode = StateDisplay.GetYellowMode(state);
-        var greenMode = StateDisplay.GetGreenMode(state);
+        var displayConfig = GetDisplayConfig(state);
+        var color = (Color)ColorConverter.ConvertFromString(displayConfig.Color);
+        var brush = new SolidColorBrush(color);
+        var mode = displayConfig.Mode switch
+        {
+            "on" => LightMode.On,
+            "blink" => LightMode.Blink,
+            _ => LightMode.Off
+        };
 
-        ApplyLight(RedLight, RedGlow, RedBrush, redMode, true);
-        ApplyLight(YellowLight, YellowGlow, YellowBrush, yellowMode, true);
-        ApplyLight(GreenLight, GreenGlow, GreenBrush, greenMode, true);
+        // Reset all lights to off
+        ApplyLight(RedLight, RedGlow, OffBrush, LightMode.Off, true);
+        ApplyLight(YellowLight, YellowGlow, OffBrush, LightMode.Off, true);
+        ApplyLight(GreenLight, GreenGlow, OffBrush, LightMode.Off, true);
+
+        // Apply configured lights
+        foreach (var lightName in displayConfig.Lights)
+        {
+            switch (lightName.ToLower())
+            {
+                case "red":
+                    ApplyLight(RedLight, RedGlow, brush, mode, true);
+                    break;
+                case "yellow":
+                    ApplyLight(YellowLight, YellowGlow, brush, mode, true);
+                    break;
+                case "green":
+                    ApplyLight(GreenLight, GreenGlow, brush, mode, true);
+                    break;
+            }
+        }
 
         // Update tool name display
         if (activeTool != ToolType.Unknown)
@@ -307,7 +350,7 @@ public partial class MainWindow : Window
 
         StatusText.Text = StateDisplay.GetLabel(state);
 
-        if (redMode == LightMode.Blink || yellowMode == LightMode.Blink || greenMode == LightMode.Blink)
+        if (mode == LightMode.Blink)
             _blinkTimer.Start();
         else
             _blinkTimer.Stop();
@@ -339,12 +382,27 @@ public partial class MainWindow : Window
     {
         _blinkOn = !_blinkOn;
 
-        if (StateDisplay.GetRedMode(_currentState) == LightMode.Blink)
-            ApplyLight(RedLight, RedGlow, RedBrush, LightMode.Blink, _blinkOn);
-        if (StateDisplay.GetYellowMode(_currentState) == LightMode.Blink)
-            ApplyLight(YellowLight, YellowGlow, YellowBrush, LightMode.Blink, _blinkOn);
-        if (StateDisplay.GetGreenMode(_currentState) == LightMode.Blink)
-            ApplyLight(GreenLight, GreenGlow, GreenBrush, LightMode.Blink, _blinkOn);
+        var displayConfig = GetDisplayConfig(_currentState);
+        if (displayConfig.Mode != "blink") return;
+
+        var color = (Color)ColorConverter.ConvertFromString(displayConfig.Color);
+        var brush = new SolidColorBrush(color);
+
+        foreach (var lightName in displayConfig.Lights)
+        {
+            switch (lightName.ToLower())
+            {
+                case "red":
+                    ApplyLight(RedLight, RedGlow, brush, LightMode.Blink, _blinkOn);
+                    break;
+                case "yellow":
+                    ApplyLight(YellowLight, YellowGlow, brush, LightMode.Blink, _blinkOn);
+                    break;
+                case "green":
+                    ApplyLight(GreenLight, GreenGlow, brush, LightMode.Blink, _blinkOn);
+                    break;
+            }
+        }
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
